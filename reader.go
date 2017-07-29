@@ -9,10 +9,13 @@ _ "fmt"
 "io"
 "os"
 	"fmt"
+	//"bytes"
+	_ "reflect"
 )
 
 var (
-	ErrFormat    = errors.New("esm: not a valid esm/esp file")
+	ErrFormat = errors.New("esm: not a valid esm/esp file")
+	ErrNilType = errors.New("cannot decode nil type")
 )
 
 type Reader struct {
@@ -27,17 +30,100 @@ type ReadCloser struct {
 	Reader
 }
 
+type Field struct {
+	FieldHeader
+	record *Record
+	zip *Reader
+	zipr io.ReaderAt
+	zipsize int64
+	dataSectionReader *io.SectionReader
+	//headerOffset int64
+	data []byte
+	dataBuf []byte
+}
+
 type Record struct {
 	RecordHeader
 	zip          *Reader
 	zipr         io.ReaderAt
 	zipsize      int64
-	headerOffset int64
+	//headerOffset int64
+	fields []*Field
 }
 
-func (f *Record) String() string {
-	str := fmt.Sprintf("Record[%s]\nSize: %d", f._type, f.dataSize)
+func (f *Field) String() string {
+	str := fmt.Sprintf("Field[%s](%d): buff: %s", f._type, f.dataSize, f.dataBuf)
+	return str
+}
 
+func (f *Field) readData() error {
+
+	rs := io.NewSectionReader(f.zipr, recordHeaderLen, int64(f.dataSize) + int64(recordHeaderLen))
+	if _, err := rs.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
+	//buf := bufio.NewReader(rs)
+
+	// if type is HEDR, read struct
+	f.getFieldStructure()
+
+	return nil
+}
+
+func (f *Field) decode(iv interface{}) (error) {
+	switch v := iv.(type) {
+	case nil:
+		err := ErrNilType
+		v = nil
+		return err
+
+	case *string:
+		*v = f.decodeString()
+	case *interface{}:
+		*v = nil
+
+	}
+	return nil
+}
+
+func (f *Field) decodeString() string {
+	return ""
+}
+
+
+func (f *Field) getFieldStructure() (v interface{}, err error) {
+	err = nil
+
+	_type := fmt.Sprintf("%s", f._type)
+
+	type S struct {
+		version float32
+		numRecords int32
+		nextObjectId uint64
+	}
+
+	//v := interface
+
+	switch _type {
+
+	case "HEDR":
+		v = S{}
+	default:
+		v = nil
+		// TODO: set err
+	}
+
+	return v, err
+}
+
+
+
+func (record *Record) String() string {
+	str := fmt.Sprintf("Record[%s](%d): ", record._type, record.dataSize)
+	for _, field := range record.fields {
+		str += fmt.Sprintf("%s", field._type) + ", "
+	}
 	//_type [4]byte
 	//dataSize uint32
 	//flags uint32
@@ -50,20 +136,79 @@ func (f *Record) String() string {
 	return str
 }
 
-func (f *Record) isMaster() bool {
-	return f.flags & 0x1 != 0
+func (record *Record) isMaster() bool {
+	return record.flags & 0x1 != 0
 }
-func (f *Record) isConstant() bool {
-	return f.flags & 0x40 != 0
+func (record *Record) isConstant() bool {
+	return record.flags & 0x40 != 0
 }
-func (f *Record) isCompressed() bool {
-	return f.flags & 0x40000 != 0
+func (record *Record) isCompressed() bool {
+	return record.flags & 0x40000 != 0
 }
-func (f *Record) isMarker() bool {
-	return f.flags & 0x800000 != 0
+func (record *Record) isMarker() bool {
+	return record.flags & 0x800000 != 0
 }
 
-//func (f *Record) hasDataDescriptor() bool {
+
+func (record *Record) readFields() error {
+
+	rs := io.NewSectionReader(record.zipr, recordHeaderLen, int64(record.dataSize) + int64(recordHeaderLen))
+	if _, err := rs.Seek(0, io.SeekStart); err != nil {
+		return err
+	}
+
+	reader := bufio.NewReader(rs)
+
+	record.fields = make([]*Field, 0)
+
+	// process all field headers
+	for {
+
+		field := &Field{record: record, zip: record.zip, zipr: rs, zipsize: int64(record.dataSize)}
+		err := readFieldHeader(field, reader)
+
+		if err == ErrFormat || err == io.ErrUnexpectedEOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+
+		//field.dataSectionReader := io.NewSectionReader(record.zipr, rs.Seek(), 1000) //int64(field.dataSize) + int64(fieldHeaderLen))
+		//
+		////reader := bufio.NewReader(rs)
+		//
+		//field.data = make([]byte, int64(field.dataSize + 20))
+		//
+		////var buf [recordHeaderLen]byte
+		//if _, err := field.dataSectionReader.Read(field.data); err != nil {
+		//	return err
+		//}
+
+		//fmt.Println(field.data)
+
+		record.fields = append(record.fields, field)
+		// skip past rest of data
+
+		//buf.Discard(int(field.dataSize))
+
+		fmt.Println(field)
+
+		//buf = buf[field.dataSize:]
+	}
+
+	// at this point, only the headers for each field has been grabbed
+
+	// now process the data for each field
+
+	//for field := range record.fields {
+	//	field.readData()
+	//}
+
+	return nil
+}
+
+//func (record *Record) hasDataDescriptor() bool {
 //	return f.Flags&0x8 != 0
 //}
 
@@ -123,13 +268,16 @@ func (z *Reader) init(r io.ReaderAt, size int64) error {
 	}
 
 	// check its a TES4 record
-	if binary.BigEndian.Uint32(rootRecord._type[:]) != fileHeaderSignature {
+	if binary.BigEndian.Uint32([]byte(rootRecord._type[:])) != fileHeaderSignature {
 		return ErrFormat
 	}
 	// make sure its the right form id (0)
 	if rootRecord.id != 0 {
 		return ErrFormat
 	}
+
+	// read the fields of the root record
+	rootRecord.readFields()
 
 	return nil
 
@@ -184,13 +332,13 @@ func (rc *ReadCloser) Close() error {
 //
 // Most callers should instead use Open, which transparently
 // decompresses data and verifies checksums.
-func (f *Record) DataOffset() (offset int64, err error) {
-	bodyOffset, err := f.findBodyOffset()
-	if err != nil {
-		return
-	}
-	return f.headerOffset + bodyOffset, nil
-}
+//func (record *Record) DataOffset() (offset int64, err error) {
+//	bodyOffset, err := record.findBodyOffset()
+//	if err != nil {
+//		return
+//	}
+//	return record.headerOffset + bodyOffset, nil
+//}
 
 // Open returns a ReadCloser that provides access to the Record's contents.
 // Multiple files may be read concurrently.
@@ -223,22 +371,22 @@ func (f *Record) DataOffset() (offset int64, err error) {
 
 // findBodyOffset does the minimum work to verify the file has a header
 // and returns the file body offset.
-func (f *Record) findBodyOffset() (int64, error) {
-	var buf [fileHeaderLen]byte
-	if _, err := f.zipr.ReadAt(buf[:], f.headerOffset); err != nil {
-		return 0, err
-	}
-	b := readBuf(buf[:])
-	if sig := b.uint32(); sig != fileHeaderSignature {
-		return 0, ErrFormat
-	}
-	b = b[22:] // skip over most of the header
-	filenameLen := int(b.uint16())
-	extraLen := int(b.uint16())
-	return int64(fileHeaderLen + filenameLen + extraLen), nil
-}
+//func (record *Record) findBodyOffset() (int64, error) {
+//	var buf [fileHeaderLen]byte
+//	if _, err := record.zipr.ReadAt(buf[:], record.headerOffset); err != nil {
+//		return 0, err
+//	}
+//	b := readBuf(buf[:])
+//	if sig := b.uint32(); sig != fileHeaderSignature {
+//		return 0, ErrFormat
+//	}
+//	b = b[22:] // skip over most of the header
+//	filenameLen := int(b.uint16())
+//	extraLen := int(b.uint16())
+//	return int64(fileHeaderLen + filenameLen + extraLen), nil
+//}
 
-func readRecordHeader(f *Record, r io.Reader) error {
+func readRecordHeader(record *Record, r io.Reader) error {
 	var buf [recordHeaderLen]byte
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
 		return err
@@ -247,16 +395,37 @@ func readRecordHeader(f *Record, r io.Reader) error {
 
 	// TODO: validate signature is in the list of allowed Record header types?
 
-	f._type = [4]byte{b.byte(), b.byte(), b.byte(), b.byte()}
+	record._type = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
 
-	f.dataSize = b.uint32()
-	f.flags = b.uint32()
-	f.id = b.uint32()
-	f.revision = b.uint32()
-	f.version = b.uint16()
-	f.unknown = b.uint16()
+	record.dataSize = b.uint32()
+	record.flags = b.uint32()
+	record.id = b.uint32()
+	record.revision = b.uint32()
+	record.version = b.uint16()
+	record.unknown = b.uint16()
 
-	fmt.Println(f)
+	fmt.Println(record)
+
+	return nil
+}
+func readFieldHeader(field *Field, r io.Reader) error {
+	var bufHeader [fieldHeaderLen]byte
+	if _, err := io.ReadFull(r, bufHeader[:]); err != nil {
+		return err
+	}
+	b := readBuf(bufHeader[:])
+
+	// TODO: validate signature is in the list of allowed Record header types?
+
+	field._type = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
+
+	field.dataSize = b.uint16()
+
+	field.dataBuf = make([]byte, field.dataSize)
+
+	if _, err := io.ReadFull(r, field.dataBuf); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -264,7 +433,7 @@ func readRecordHeader(f *Record, r io.Reader) error {
 // readDirectoryHeader attempts to read a directory header from r.
 // It returns io.ErrUnexpectedEOF if it cannot read a complete header,
 // and ErrFormat if it doesn't find a valid header signature.
-//func readDirectoryHeader(f *Record, r io.Reader) error {
+//func readDirectoryHeader(record *Record, r io.Reader) error {
 //	var buf [directoryHeaderLen]byte
 //	if _, err := io.ReadFull(r, buf[:]); err != nil {
 //		return err
@@ -523,31 +692,5 @@ func findSignatureInBlock(b []byte) int {
 		}
 	}
 	return -1
-}
-
-type readBuf []byte
-
-func (b *readBuf) uint16() uint16 {
-	v := binary.LittleEndian.Uint16(*b)
-	*b = (*b)[2:]
-	return v
-}
-
-func (b *readBuf) uint32() uint32 {
-	v := binary.LittleEndian.Uint32(*b)
-	*b = (*b)[4:]
-	return v
-}
-
-func (b *readBuf) uint64() uint64 {
-	v := binary.LittleEndian.Uint64(*b)
-	*b = (*b)[8:]
-	return v
-}
-
-func (b *readBuf) byte() byte {
-	v := (*b)[0]
-	*b = (*b)[1:]
-	return v
 }
 

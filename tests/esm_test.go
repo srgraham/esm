@@ -1,4 +1,4 @@
-package esm
+package tests
 
 import (
 	_ "fmt"
@@ -6,11 +6,12 @@ import (
 	"testing"
 	"log"
 	"fmt"
+	esm ".."
 )
 
 func TestXxx(t *testing.T) {
 	fmt.Printf("yoooo")
-	r, err := OpenReader("./ShellRain.esp")
+	r, err := esm.OpenReader("./ShellRain.esp")
 
 	if err != nil {
 		log.Fatal(err)
