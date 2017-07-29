@@ -11,11 +11,13 @@ _ "fmt"
 	"fmt"
 	//"bytes"
 	_ "reflect"
+	"reflect"
 )
 
 var (
 	ErrFormat = errors.New("esm: not a valid esm/esp file")
 	ErrNilType = errors.New("cannot decode nil type")
+	ErrDecodeUnknownType = errors.New("cannot decode %s type")
 )
 
 type Reader struct {
@@ -39,7 +41,8 @@ type Field struct {
 	dataSectionReader *io.SectionReader
 	//headerOffset int64
 	data []byte
-	dataBuf []byte
+	//dataBuf []byte
+	dataBuf readBuf
 }
 
 type Record struct {
@@ -66,31 +69,144 @@ func (f *Field) readData() error {
 	//buf := bufio.NewReader(rs)
 
 	// if type is HEDR, read struct
-	f.getFieldStructure()
+	data, err := f.getFieldStructure()
+	if err != nil {
+		return err
+	}
+	fmt.Println(data)
 
 	return nil
 }
 
-func (f *Field) decode(iv interface{}) (error) {
+func (b *readBuf) decode(iv interface{}) (error) {
+
 	switch v := iv.(type) {
 	case nil:
 		err := ErrNilType
 		v = nil
 		return err
 
-	case *string:
-		*v = f.decodeString()
+	//case *zstring:
+	//	*v = b.decodeZstring()
+	case *float32:
+		*v = 0
+
 	case *interface{}:
 		*v = nil
+	default:
+		rv := reflect.ValueOf(iv)
+		fmt.Println("unknown kind!", rv.Kind())
+
+		// check for struct
+
+		if rv.Kind() == reflect.Struct {
+			v = b.decodeStructRv(rv)
+			return nil
+		}
+
+		fmt.Println("not struct", rv.Kind())
+
+		if rv.Kind() != reflect.Ptr {
+			fmt.Println(rv.Kind())
+			//err := ErrNilType
+			//return err
+		}
+		rv = rv.Elem()
+
+		if rv.IsValid() {
+			rv.Set(reflect.Zero(rv.Type()))
+		}
+		err := fmt.Errorf("cannot decode %s type", v)
+		return err
+		//err := ErrDecodeUnknownType
 
 	}
 	return nil
 }
 
-func (f *Field) decodeString() string {
-	return ""
+
+
+func (b *readBuf) decodeStructRv(rv reflect.Value) []interface{} {
+
+	structValues := make([]interface{}, rv.NumField())
+
+	fmt.Println("looping struct")
+
+	for i := 0; i < rv.NumField(); i++ {
+		var subV interface{}
+		subRv := rv.Field(i)
+
+		fmt.Println("reading at", b)
+
+		// check for structs
+		if subRv.Kind() == reflect.Struct {
+			subV = b.decodeStructRv(subRv)
+		} else {
+			// check various types
+			//v := rv.Elem()
+
+			switch subRv.Interface().(type) {
+
+			case char:
+				subV = b.char()
+
+			case wchar:
+				subV = b.wchar()
+
+			case uint8:
+				subV = b.uint8()
+
+			case uint16:
+				subV = b.uint16()
+
+			case uint32:
+				subV = b.uint32()
+
+			case uint64:
+				subV = b.uint64()
+
+			case int8:
+				subV = b.int8()
+
+			case int16:
+				subV = b.int16()
+
+			case int32:
+				subV = b.int32()
+
+			case int64:
+				subV = b.int64()
+
+			case float32:
+				subV = b.float32()
+
+			case float64:
+				subV = b.float64()
+
+			case floooat32:
+				subV = b.float32()
+
+			default:
+				panic(fmt.Errorf("cannot decode type '%s'", subRv.Type()))
+			}
+
+
+		}
+
+		fmt.Println("decoded", subV, b)
+
+		structValues[i] = subV
+	}
+
+	return structValues
 }
 
+//func (f *Field) decodeStruct() string {
+//	return ""
+//}
+
+
+type floooat32 float32
 
 func (f *Field) getFieldStructure() (v interface{}, err error) {
 	err = nil
@@ -98,9 +214,9 @@ func (f *Field) getFieldStructure() (v interface{}, err error) {
 	_type := fmt.Sprintf("%s", f._type)
 
 	type S struct {
-		version float32
-		numRecords int32
-		nextObjectId uint64
+		Version floooat32
+		NumRecords int32
+		NextObjectId uint32
 	}
 
 	//v := interface
@@ -113,6 +229,8 @@ func (f *Field) getFieldStructure() (v interface{}, err error) {
 		v = nil
 		// TODO: set err
 	}
+
+	f.dataBuf.decode(v)
 
 	return v, err
 }
@@ -187,12 +305,14 @@ func (record *Record) readFields() error {
 
 		//fmt.Println(field.data)
 
+		field.readData()
+
 		record.fields = append(record.fields, field)
 		// skip past rest of data
 
 		//buf.Discard(int(field.dataSize))
 
-		fmt.Println(field)
+		//fmt.Println(field)
 
 		//buf = buf[field.dataSize:]
 	}

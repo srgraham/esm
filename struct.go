@@ -3,6 +3,7 @@ package esm
 import (
 	"encoding/binary"
 
+	"math"
 )
 
 
@@ -141,7 +142,7 @@ type readBuf []byte
 
 func (b *readBuf) char() char { return char(b.uint8()) }
 
-func (b *readBuf) wchar() {panic("Unimplemented readBuf type")}
+func (b *readBuf) wchar() wchar {panic("Unimplemented readBuf type")}
 
 
 //func (b *readBuf) bool() bool {
@@ -182,9 +183,9 @@ func (b *readBuf) int32() int32 { return int32(b.uint32()) }
 
 func (b *readBuf) int64() int64 { return int64(b.uint64()) }
 
-func (b *readBuf) float32() float32 { return float32(b.uint32()) }
+func (b *readBuf) float32() float32 { return math.Float32frombits(b.uint32()) }
 
-func (b *readBuf) float64() float64 { return float64(b.uint64()) }
+func (b *readBuf) float64() float64 { return math.Float64frombits(b.uint64()) }
 
 
 
