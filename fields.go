@@ -1,4 +1,4 @@
-package fields
+package esm
 
 var FieldsStructLookup map[string]map[string]interface{}
 
@@ -14,14 +14,11 @@ type thing2 struct {
 }
 
 
-//type things map[string]map[string]interface{} {
-//	"TES4": map[string]interface{} {
-//		"HEDR": thing
-//	}
-//}
-
-
 func init() {
+
+	var _zstring zstring
+	//var _float32 float32
+	_zstring = ""
 
 	FieldsStructLookup = make(map[string]map[string]interface{})
 	//FieldsStructLookup = map[string]interface{} {
@@ -32,17 +29,8 @@ func init() {
 		NextObjectId uint32
 	}{}
 
+	FieldsStructLookup["TES4"]["CNAM"] = _zstring
+
 	_ = 9
 }
-
-//FieldsStructLookup map[string]interface{} {
-//	TES4 struct {
-//		HEDR struct {
-//			Version float32
-//			NumRecords int32
-//			NextObjectId uint32
-//		}
-//	}
-//}
-
 

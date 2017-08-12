@@ -200,23 +200,31 @@ func (b *readBuf) float() {panic("Deprecated readBuf type")}
 
 
 //// todo: write special parser for this
-//type vsval []byte
+//func(b *readBuf) vsval() { return []byte }
 //
-//type formid uint32
-//type iref uint32
-//type hash [8]uint8
-//type filetime uint64
-//type systemtime [16]uint8
-//type rgb uint32
+//func(b *readBuf) formid() { return uint32 }
+//func(b *readBuf) iref() { return uint32 }
+//func(b *readBuf) hash() { //return8]uint8 }
+//func(b *readBuf) filetime() { return uint64 }
+//func(b *readBuf) systemtime() { // return6]uint8 }
+//func(b *readBuf) rgb() { return uint32 }
 //
-//type lstring string
-//type dlstring string
-//type ilstring string
-//type bstring string
-//type bzstring string
-//type wstring string
-//type wzstring string
-//type zstring string
+//func(b *readBuf) lstring() { return string }
+//func(b *readBuf) dlstring() { return string }
+//func(b *readBuf) ilstring() { return string }
+//func(b *readBuf) bstring() { return string }
+//func(b *readBuf) bzstring() { return string }
+//func(b *readBuf) wstring() { return string }
+//func(b *readBuf) wzstring() { return string }
+func(b *readBuf) zstring() zstring {
+	i := 0;
+	for (*b)[i] != 0 {
+		i += 1
+	}
+	x := zstring((*b)[0:i])
+	*b = (*b)[i:]
+	return x
+}
 
 
 
