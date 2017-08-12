@@ -59,7 +59,7 @@ type Record struct {
 
 func (f *Field) String() string {
 	//str := fmt.Sprintf("Field[%s](%d): buff: %s", f._type, f.dataSize, f.dataBuf)
-	str := fmt.Sprintf("Field[%s](%d): data: %s", f._type, f.dataSize, f.data)
+	str := fmt.Sprintf("Field[%s](%d): data: %s", f.Type(), f.dataSize, f.data)
 	return str
 }
 
@@ -77,7 +77,7 @@ func (f *Field) readData() error {
 	if err != nil && err != ErrUnimplementedField {
 		return err
 	}
-	fmt.Println("field_data", data)
+	fmt.Printf("%s.%s: %v\n", f.RecordType(), f.Type(), data)
 
 	f.data = data
 
@@ -85,7 +85,7 @@ func (f *Field) readData() error {
 }
 
 func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
-	fmt.Println(t.Kind())
+	//fmt.Println(t.Kind())
 	switch t.Kind() {
 	case reflect.Map:
 		v.Set(reflect.MakeMap(t))
@@ -147,8 +147,6 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 			panic(fmt.Errorf("cannot decode type '%s'", v.Type()))
 		}
 
-		fmt.Println(rv, reflect.Indirect(rv))
-
 		v.Set(reflect.Indirect(rv))
 
 		return nil
@@ -159,10 +157,8 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 
 func (f *Field) getFieldStructure() (out interface{}, err error) {
 
-	_type := fmt.Sprintf("%s", f._type)
-
-	recordTypeStr := fmt.Sprintf("%s", f.record._type)
-	fieldTypeStr := _type
+	recordTypeStr := f.RecordType()
+	fieldTypeStr := f.Type()
 
 	zeroValue := FieldsStructLookup[recordTypeStr][fieldTypeStr]
 
@@ -180,12 +176,23 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 	return v.Elem(), nil
 }
 
+func (f *Field) Type() (string) {
+	return fmt.Sprintf("%s", f._type)
+}
+func (f *Field) RecordType() (string) {
+	return f.record.Type()
+}
+
+func (record *Record) Type() (string){
+	return fmt.Sprintf("%s", record._type)
+}
+
 
 
 func (record *Record) String() string {
-	str := fmt.Sprintf("Record[%s](%d): ", record._type, record.dataSize)
+	str := fmt.Sprintf("Record[%s](%d): ", record.Type(), record.dataSize)
 	for _, field := range record.fields {
-		str += fmt.Sprintf("%s", field._type) + ", "
+		str += fmt.Sprintf("%s", field.Type()) + ", "
 	}
 	//_type [4]byte
 	//dataSize uint32

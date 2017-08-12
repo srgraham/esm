@@ -16,9 +16,7 @@ type thing2 struct {
 
 func init() {
 
-	var _zstring zstring
-	//var _float32 float32
-	_zstring = ""
+	var zero_zstring zstring
 
 	FieldsStructLookup = make(map[string]map[string]interface{})
 	//FieldsStructLookup = map[string]interface{} {
@@ -29,7 +27,8 @@ func init() {
 		NextObjectId uint32
 	}{}
 
-	FieldsStructLookup["TES4"]["CNAM"] = _zstring
+	FieldsStructLookup["TES4"]["CNAM"] = zero_zstring
+	FieldsStructLookup["TES4"]["MAST"] = zero_zstring
 
 	_ = 9
 }
