@@ -12,6 +12,8 @@ _ "fmt"
 	//"bytes"
 	_ "reflect"
 	"reflect"
+
+	fields "./fields"
 )
 
 var (
@@ -40,9 +42,10 @@ type Field struct {
 	zipsize int64
 	dataSectionReader *io.SectionReader
 	//headerOffset int64
-	data []byte
+	//data []byte
 	//dataBuf []byte
 	dataBuf readBuf
+	data interface{}
 }
 
 type Record struct {
@@ -55,7 +58,8 @@ type Record struct {
 }
 
 func (f *Field) String() string {
-	str := fmt.Sprintf("Field[%s](%d): buff: %s", f._type, f.dataSize, f.dataBuf)
+	//str := fmt.Sprintf("Field[%s](%d): buff: %s", f._type, f.dataSize, f.dataBuf)
+	str := fmt.Sprintf("Field[%s](%d): data: %s", f._type, f.dataSize, f.data)
 	return str
 }
 
@@ -73,14 +77,85 @@ func (f *Field) readData() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(data)
+	fmt.Println(111, data)
+
+	f.data = data
 
 	return nil
 }
 
-func (b *readBuf) decode(iv interface{}) (error) {
+func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
+	fmt.Println(t.Kind())
+	switch t.Kind() {
+	case reflect.Map:
+		v.Set(reflect.MakeMap(t))
+	case reflect.Struct:
+		fieldCount := v.NumField()
+		for i := 0; i < fieldCount; i+=1 {
+			structFieldType := t.Field(i)
+			structFieldValue := v.Field(i)
+			b.readType(structFieldType.Type, structFieldValue)
+		}
+	default:
 
-	switch v := iv.(type) {
+		switch v.Interface().(type) {
+
+		case char:
+			v.Set(reflect.ValueOf(b.char()))
+
+		case wchar:
+			v.Set(reflect.ValueOf(b.wchar()))
+
+		case uint8:
+			v.Set(reflect.ValueOf(b.uint8()))
+
+		case uint16:
+			v.Set(reflect.ValueOf(b.uint16()))
+
+		case uint32:
+			v.Set(reflect.ValueOf(b.uint32()))
+
+		case uint64:
+			v.Set(reflect.ValueOf(b.uint64()))
+
+		case int8:
+			v.Set(reflect.ValueOf(b.int8()))
+
+		case int16:
+			v.Set(reflect.ValueOf(b.int16()))
+
+		case int32:
+			v.Set(reflect.ValueOf(b.int32()))
+
+		case int64:
+			v.Set(reflect.ValueOf(b.int64()))
+
+		case float32:
+			v.Set(reflect.ValueOf(b.float32()))
+			//subVRv := reflect.ValueOf(subV)
+			//subRv.Set(reflect.Value(subVRv))
+
+		case float64:
+			v.Set(reflect.ValueOf(b.float64()))
+
+		default:
+			panic(fmt.Errorf("cannot decode type '%s'", v.Type()))
+		}
+
+		return nil
+	}
+	return nil
+}
+
+// FIXME: figure out how to pass by ref correctly
+func (b *readBuf) decode(newValuePtr interface{}) (error) {
+
+	//var refIv2 interface{}
+	//refIv2 = &iv
+	////var refIv interface{}
+	////refIv = &iv
+
+	switch v := newValuePtr.(type) {
 	case nil:
 		err := ErrNilType
 		v = nil
@@ -92,30 +167,52 @@ func (b *readBuf) decode(iv interface{}) (error) {
 		*v = 0
 
 	case *interface{}:
-		*v = nil
+		return nil
+		//rv := reflect.ValueOf(iv)
+		//rv := reflect.ValueOf(refIv)
+		//if rv.Kind() == reflect.Struct {
+		//	//out := b.decodeStructByAddr(refIv)
+		//	//out := b.decodeStructRv(rv)
+		//	out := b.decodeStruct(*v, iv)
+		//	//*v = out
+		//	*v = out
+		//	//iv = out
+		//	//refIv = &out
+		//
+		//	return nil
+		//}
+		//*v = nil
+	case interface{}:
+		//*v = nil
+		panic(fmt.Errorf("wf"))
 	default:
-		rv := reflect.ValueOf(iv)
-		fmt.Println("unknown kind!", rv.Kind())
-
-		// check for struct
-
-		if rv.Kind() == reflect.Struct {
-			v = b.decodeStructRv(rv)
-			return nil
-		}
-
-		fmt.Println("not struct", rv.Kind())
-
-		if rv.Kind() != reflect.Ptr {
-			fmt.Println(rv.Kind())
-			//err := ErrNilType
-			//return err
-		}
-		rv = rv.Elem()
-
-		if rv.IsValid() {
-			rv.Set(reflect.Zero(rv.Type()))
-		}
+		//rv := reflect.ValueOf(refIv)
+		//fmt.Println("unknown kind!", rv.Kind())
+		//
+		//// check for struct
+		//
+		//if rv.Kind() == reflect.Struct {
+		//	//out := b.decodeStructByAddr(&iv)
+		//	//out := b.decodeStructRv(rv)
+		//	//*v = out
+		//	//v = out
+		//	//refIv = &out
+		//
+		//	return nil
+		//}
+		//
+		//fmt.Println("not struct", rv.Kind())
+		//
+		//if rv.Kind() != reflect.Ptr {
+		//	fmt.Println(rv.Kind())
+		//	//err := ErrNilType
+		//	//return err
+		//}
+		//rv = rv.Elem()
+		//
+		//if rv.IsValid() {
+		//	rv.Set(reflect.Zero(rv.Type()))
+		//}
 		err := fmt.Errorf("cannot decode %s type", v)
 		return err
 		//err := ErrDecodeUnknownType
@@ -124,19 +221,49 @@ func (b *readBuf) decode(iv interface{}) (error) {
 	return nil
 }
 
+func (b *readBuf) decodeStruct(pointerTypeRefIv interface{}, iv interface{}) interface{} {
+	//pointerTypeRefIv = 9.9
+	ps := reflect.ValueOf(iv)
+	//ps := reflect.ValueOf(pointerTypeRefIv)
+
+	fmt.Println(4444, ps)
+
+	s := ps.Elem()
+	//s:=ps
+
+	f:=s.FieldByName("Version")
+
+		//f := s.Field(0)
+		f.SetFloat(9.9)
+
+	//fmt.Println(f)
+	//fmt.Println(pv)
+	return pointerTypeRefIv
+}
 
 
-func (b *readBuf) decodeStructRv(rv reflect.Value) []interface{} {
+func (b *readBuf) decodeStructRv(rv reflect.Value) interface{} {
 
-	structValues := make([]interface{}, rv.NumField())
+	//structValues := make([]interface{}, rv.NumField())
+	//structValues := interface{}
 
 	fmt.Println("looping struct")
+
+	indir := reflect.Indirect(rv)
 
 	for i := 0; i < rv.NumField(); i++ {
 		var subV interface{}
 		subRv := rv.Field(i)
 
+		a := rv.FieldByName("Version").Float()
+		_ = a
+
+		rv.Field(i).SetFloat(9.9)
+
 		fmt.Println("reading at", b)
+
+
+		indir.SetFloat(9.9)
 
 		// check for structs
 		if subRv.Kind() == reflect.Struct {
@@ -179,12 +306,11 @@ func (b *readBuf) decodeStructRv(rv reflect.Value) []interface{} {
 
 			case float32:
 				subV = b.float32()
+				//subVRv := reflect.ValueOf(subV)
+				//subRv.Set(reflect.Value(subVRv))
 
 			case float64:
 				subV = b.float64()
-
-			case floooat32:
-				subV = b.float32()
 
 			default:
 				panic(fmt.Errorf("cannot decode type '%s'", subRv.Type()))
@@ -193,44 +319,64 @@ func (b *readBuf) decodeStructRv(rv reflect.Value) []interface{} {
 
 		}
 
-		fmt.Println("decoded", subV, b)
+		fmt.Println("decoded", subV, subRv, b)
 
-		structValues[i] = subV
+		p := float32(9)
+
+		f := reflect.ValueOf(p)
+
+		//structValues["poo"] = subV
+		subRv.Set(reflect.Value(reflect.ValueOf(f)))
+
+
+
+
 	}
 
-	return structValues
+	fmt.Println("out", rv)
+
+	return rv.Interface()
 }
 
-//func (f *Field) decodeStruct() string {
-//	return ""
-//}
-
-
-type floooat32 float32
-
-func (f *Field) getFieldStructure() (v interface{}, err error) {
+func (f *Field) getFieldStructure() (out interface{}, err error) {
 	err = nil
 
 	_type := fmt.Sprintf("%s", f._type)
 
 	type S struct {
-		Version floooat32
+		Version float32
 		NumRecords int32
 		NextObjectId uint32
 	}
 
-	//v := interface
+	//out := interface
 
 	switch _type {
 
 	case "HEDR":
-		v = S{}
+		out = S{}
 	default:
-		v = nil
+		out = nil
 		// TODO: set err
 	}
 
-	f.dataBuf.decode(v)
+	//fmt.Println(fields.FieldsStructLookup)
+
+	recordType := fmt.Sprintf("%s", f.record._type)
+	fieldTypeStr := _type
+
+	zeroValue := fields.FieldsStructLookup[recordType][fieldTypeStr]
+
+	t := reflect.TypeOf(zeroValue)
+
+	if t == nil {
+		err = fmt.Errorf("Unimplemented type %s.%s", recordType, fieldTypeStr)
+		return err, err
+	}
+
+
+	v := reflect.New(t)
+	f.dataBuf.readType(t, v.Elem())
 
 	return v, err
 }
