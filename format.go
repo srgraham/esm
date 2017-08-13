@@ -18,7 +18,7 @@ func init() {
 
 	//var uint8Zero uint8
 	//var uint16Zero uint16
-	//var uint32Zero uint32
+	var uint32Zero uint32
 	var uint64Zero uint64
 	//var int8Zero int8
 	//var int16Zero int16
@@ -70,6 +70,7 @@ func init() {
 	FieldsStructLookup["TES4"]["SNAM"] = zstringZero
 	FieldsStructLookup["TES4"]["MAST"] = zstringZero
 	FieldsStructLookup["TES4"]["DATA"] = uint64Zero
+	FieldsStructLookup["TES4"]["INTV"] = uint32Zero
 
 	_ = 9
 }

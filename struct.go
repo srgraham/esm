@@ -7,38 +7,17 @@ import (
 )
 
 
-// RecordHeader describes a file within a zip file.
-// See the zip spec for details.
-type RecordHeader struct {
-	// Name is the name of the file.
-	// It must be a relative path: it must not start with a drive
-	// letter (e.g. C:) or leading slash, and only forward slashes
-	// are allowed.
-
-	_type char4
-	dataSize uint32
-	flags uint32
-	id uint32
-	revision uint32
-	version uint16
-	unknown uint16
-	data []uint8
-}
-
-type FieldHeader struct {
-	_type char4
-	dataSize uint16
-}
-
 
 const (
 
 
 	recordHeaderLen = 24
+	groupHeaderLen = 24
 	fieldHeaderLen = 6
 
 
 	fileHeaderSignature      = 0x54455334 // TES4
+	groupHeaderSignature      = 0x54455334 // GRUP
 
 	directoryHeaderSignature = 0x02014b50
 	directoryEndSignature    = 0x06054b50
