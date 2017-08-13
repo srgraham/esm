@@ -6,6 +6,7 @@ import (
 	"math"
 	"encoding/binary"
 
+	"regexp"
 )
 
 
@@ -134,6 +135,12 @@ func(b *readBuf) zstring() zstring {
 	x := zstring((*b)[0:i])
 	*b = (*b)[i:]
 	return x
+}
+
+func (b *readBuf) Human() string {
+	r := regexp.MustCompile("[^a-zA-Z0-9_ ,/?\\\\+=()\\][&^%$#@!~'\":<>-]")
+	out := r.ReplaceAll([]byte(*b), []byte("."))
+	return string(out)
 }
 
 

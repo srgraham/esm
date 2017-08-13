@@ -118,7 +118,7 @@ func (r *Record) readFields(reader io.ReaderAt) error {
 	r.fields = make([]*Field, 0)
 
 	// process all field headers
-	for {
+	for off < r.off + r.Size() {
 
 		headerReader := io.NewSectionReader(reader, off, fieldHeaderLen)
 
@@ -127,7 +127,7 @@ func (r *Record) readFields(reader io.ReaderAt) error {
 
 		off += fieldHeaderLen
 
-		sr := io.NewSectionReader(reader, off, field.Size())
+		sr := io.NewSectionReader(reader, off, field.Size() - fieldHeaderLen)
 		field.sr = sr
 
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {

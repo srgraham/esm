@@ -37,7 +37,7 @@ type Group struct {
 
 // calculates the size of all the things (header and all data)
 func (g *Group) Size() int64 {
-	return int64(g.groupSize)
+	return int64(g.groupSize + groupHeaderLen)
 }
 
 
@@ -52,7 +52,7 @@ func (g *Group) readHeader(sr io.SectionReader) error {
 	// TODO: validate signature is in the list of allowed Record header types?
 
 	g._type = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
-	g.groupSize = b.uint32()
+	g.groupSize = b.uint32() - groupHeaderLen
 	g.label = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
 	g.groupType = b.uint32()
 	g.stamp = b.uint16()
@@ -108,7 +108,7 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 
 	var off int64 = g.off + groupHeaderLen
 
-	for {
+	for off < g.off + g.Size() {
 		headerReader := io.NewSectionReader(reader, off, recordHeaderLen)
 
 		record := &Record{group: g, off:off}
@@ -116,8 +116,10 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 
 		off += recordHeaderLen
 
-		sr := io.NewSectionReader(reader, off, record.Size())
+		sr := io.NewSectionReader(reader, off, record.Size() - recordHeaderLen)
 		record.sr = sr
+
+
 
 		off += record.Size() - recordHeaderLen
 

@@ -108,7 +108,7 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 
 	if t == nil {
 		err = ErrUnimplementedField
-		msg := fmt.Sprintf("### Unimplemented field %s.%s", recordTypeStr, fieldTypeStr)
+		msg := fmt.Sprintf("### Unimplemented field %s.%s: %s", recordTypeStr, fieldTypeStr, f.dataBuf.Human())
 		return msg, err
 	}
 

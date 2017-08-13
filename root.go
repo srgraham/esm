@@ -34,7 +34,7 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 
 	var off int64 = root.off + root.rootRecord.Size()
 
-	for {
+	for off < root.off + root.Size() {
 		headerReader := io.NewSectionReader(reader, off, groupHeaderLen)
 
 		group := &Group{root: root, off: off}

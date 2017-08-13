@@ -63,5 +63,13 @@ func init() {
 	TES4["DATA"] = uint64Zero
 	TES4["INTV"] = uint32Zero
 
+
+
+	// GMST
+	FieldsStructLookup["GMST"] = make(map[string]interface{})
+	GMST := FieldsStructLookup["GMST"]
+
+	GMST["EDID"] = zstringZero
+
 }
 
