@@ -3,7 +3,140 @@ package esm
 import (
 	"reflect"
 	"fmt"
+	"math"
+	"encoding/binary"
+
 )
+
+
+type readBuf []byte
+
+
+
+
+
+
+//func (b *readBuf) uint16() uint16 {
+//	v := binary.LittleEndian.Uint16(*b)
+//	*b = (*b)[2:]
+//	return v
+//}
+//
+//func (b *readBuf) uint32() uint32 {
+//	v := binary.LittleEndian.Uint32(*b)
+//	*b = (*b)[4:]
+//	return v
+//}
+//
+//func (b *readBuf) uint64() uint64 {
+//	v := binary.LittleEndian.Uint64(*b)
+//	*b = (*b)[8:]
+//	return v
+//}
+//
+//func (b *readBuf) byte() byte {
+//	v := (*b)[0]
+//	*b = (*b)[1:]
+//	return v
+//}
+//
+//func (b *readBuf) skip(size int64) {
+//	*b = (*b)[size:]
+//	return
+//}
+
+
+
+
+
+
+func (b *readBuf) char() char { return char(b.uint8()) }
+
+func (b *readBuf) wchar() wchar {panic("Unimplemented readBuf type")}
+
+
+//func (b *readBuf) bool() bool {
+//	x := (*b)[0]
+//	*b = (*b)[1:]
+//	return x != 0
+//}
+
+func (b *readBuf) uint8() uint8 {
+	x := (*b)[0]
+	*b = (*b)[1:]
+	return x
+}
+
+func (b *readBuf) uint16() uint16 {
+	x := binary.LittleEndian.Uint16((*b)[0:2])
+	*b = (*b)[2:]
+	return x
+}
+
+func (b *readBuf) uint32() uint32 {
+	x := binary.LittleEndian.Uint32((*b)[0:4])
+	*b = (*b)[4:]
+	return x
+}
+
+func (b *readBuf) uint64() uint64 {
+	x := binary.LittleEndian.Uint64((*b)[0:8])
+	*b = (*b)[8:]
+	return x
+}
+
+func (b *readBuf) int8() int8 { return int8(b.uint8()) }
+
+func (b *readBuf) int16() int16 { return int16(b.uint16()) }
+
+func (b *readBuf) int32() int32 { return int32(b.uint32()) }
+
+func (b *readBuf) int64() int64 { return int64(b.uint64()) }
+
+func (b *readBuf) float32() float32 { return math.Float32frombits(b.uint32()) }
+
+func (b *readBuf) float64() float64 { return math.Float64frombits(b.uint64()) }
+
+
+
+
+// DEPRECATED TYPES
+func (b *readBuf) ubyte() {panic("Deprecated readBuf type")}
+func (b *readBuf) short() {panic("Deprecated readBuf type")}
+func (b *readBuf) ushort() {panic("Deprecated readBuf type")}
+func (b *readBuf) long() {panic("Deprecated readBuf type")}
+func (b *readBuf) ulong() {panic("Deprecated readBuf type")}
+func (b *readBuf) float() {panic("Deprecated readBuf type")}
+
+
+//// todo: write special parser for this
+//func(b *readBuf) vsval() { return []byte }
+//
+//func(b *readBuf) formid() { return uint32 }
+//func(b *readBuf) iref() { return uint32 }
+//func(b *readBuf) hash() { //return8]uint8 }
+//func(b *readBuf) filetime() { return uint64 }
+//func(b *readBuf) systemtime() { // return6]uint8 }
+//func(b *readBuf) rgb() { return uint32 }
+//
+//func(b *readBuf) lstring() { return string }
+//func(b *readBuf) dlstring() { return string }
+//func(b *readBuf) ilstring() { return string }
+//func(b *readBuf) bstring() { return string }
+//func(b *readBuf) bzstring() { return string }
+//func(b *readBuf) wstring() { return string }
+//func(b *readBuf) wzstring() { return string }
+func(b *readBuf) zstring() zstring {
+	i := 0;
+	for (*b)[i] != 0 {
+		i += 1
+	}
+	x := zstring((*b)[0:i])
+	*b = (*b)[i:]
+	return x
+}
+
+
 
 func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 	//fmt.Println(t.Kind())

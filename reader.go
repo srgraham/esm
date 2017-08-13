@@ -2,7 +2,6 @@ package esm
 
 
 import (
-"bufio"
 "encoding/binary"
 "errors"
 _ "fmt"
@@ -32,12 +31,6 @@ type ReadCloser struct {
 
 
 
-
-
-//func (record *Record) hasDataDescriptor() bool {
-//	return f.Flags&0x8 != 0
-//}
-
 // OpenReader will open the esm/esp file specified by name and return a ReadCloser.
 func OpenReader(name string) (*ReadCloser, error) {
 	f, err := os.Open(name)
@@ -60,15 +53,18 @@ func OpenReader(name string) (*ReadCloser, error) {
 
 // NewReader returns a new Reader reading from r, which is assumed to
 // have the given size in bytes.
-func NewReader(r io.ReaderAt, size int64) (*Reader, error) {
-	zr := new(Reader)
-	if err := zr.init(r, size); err != nil {
+func NewReader(readerAt io.ReaderAt, size int64) (*Reader, error) {
+	reader := new(Reader)
+	if err := reader.init(readerAt, size); err != nil {
 		return nil, err
 	}
-	return zr, nil
+	return reader, nil
 }
 
-func (z *Reader) init(r io.ReaderAt, size int64) error {
+func (z *Reader) init(reader io.ReaderAt, size int64) error {
+	if size == 0 {
+		size = 1<<63-1
+	}
 	//end, err := readDirectoryEnd(r, size)
 	//if err != nil {
 	//	return err
@@ -76,19 +72,19 @@ func (z *Reader) init(r io.ReaderAt, size int64) error {
 	//if end.directoryRecords > uint64(size)/fileHeaderLen {
 	//	return fmt.Errorf("archive/zip: TOC declares impossible %d files in %d byte zip", end.directoryRecords, size)
 	//}
-	z.r = r
+	//z.r = reader
 
-	//z.Record = readRecordHeader(r)
-	//z.Comment = end.comment
-	rs := io.NewSectionReader(r, 0, size)
-	//if _, err = rs.Seek(int64(end.directoryOffset), io.SeekStart); err != nil {
+	off := int64(0)
+
+	sr := io.NewSectionReader(reader, off, size)
+	//if _, err = sr.Seek(int64(end.directoryOffset), io.SeekStart); err != nil {
 	//	return err
 	//}
-	buf := bufio.NewReader(rs)
+	//reader := bufio.NewReader(sr)
 
-	rootRecord := &Record{readerAt: r, zipsize: size}
+	rootRecord := &Record{off: off}
 
-	err := rootRecord.readHeader(buf)
+	err := rootRecord.readHeader(*sr)
 
 	if err != nil {
 		return err
@@ -104,11 +100,12 @@ func (z *Reader) init(r io.ReaderAt, size int64) error {
 	}
 
 	// read the fields of the root record
-	rootRecord.readFields()
+	rootRecord.readFields(reader)
 
 	// we have the TES4 data. now lets grab the groups
-	root := &Root{rootRecord : rootRecord}
+	root := &Root{rootRecord : rootRecord, readerAt: reader, readerSize: size, off: off}
 
+	root.readGroups(reader)
 
 	//root.
 	_ = root

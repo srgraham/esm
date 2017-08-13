@@ -2,18 +2,6 @@ package esm
 
 var FieldsStructLookup map[string]map[string]interface{}
 
-type thing struct {
-	Version      float32
-	NumRecords   int32
-	NextObjectId uint32
-}
-
-type thing2 struct {
-	HEDR thing
-	CNAM float32
-}
-
-
 func init() {
 
 	//var uint8Zero uint8
@@ -58,20 +46,22 @@ func init() {
 
 
 	FieldsStructLookup = make(map[string]map[string]interface{})
-	//FieldsStructLookup = map[string]interface{} {
+
+
+	// TES4
 	FieldsStructLookup["TES4"] = make(map[string]interface{})
-	FieldsStructLookup["TES4"]["HEDR"] = struct {
+	TES4 := FieldsStructLookup["TES4"]
+
+	TES4["HEDR"] = struct {
 		Version      float32
 		NumRecords   int32
 		NextObjectId uint32
 	}{}
+	TES4["CNAM"] = zstringZero
+	TES4["SNAM"] = zstringZero
+	TES4["MAST"] = zstringZero
+	TES4["DATA"] = uint64Zero
+	TES4["INTV"] = uint32Zero
 
-	FieldsStructLookup["TES4"]["CNAM"] = zstringZero
-	FieldsStructLookup["TES4"]["SNAM"] = zstringZero
-	FieldsStructLookup["TES4"]["MAST"] = zstringZero
-	FieldsStructLookup["TES4"]["DATA"] = uint64Zero
-	FieldsStructLookup["TES4"]["INTV"] = uint32Zero
-
-	_ = 9
 }
 

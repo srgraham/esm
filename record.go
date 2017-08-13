@@ -3,7 +3,6 @@ package esm
 import (
 	"io"
 	"fmt"
-	"bufio"
 )
 
 // RecordHeader describes a file within a zip file.
@@ -26,16 +25,24 @@ type RecordHeader struct {
 
 type Record struct {
 	RecordHeader
-	readerAt         io.ReaderAt
-	zipsize      int64
+	group *Group
+	sr *io.SectionReader
+	off int64
+	//readerAt         io.ReaderAt
+	//readerSize      int64
 	//headerOffset int64
 	fields []*Field
 }
 
+// calculates the size of all the things (header and all data)
+func (r *Record) Size() int64 {
+	return int64(recordHeaderLen) + int64(r.dataSize)
+}
 
-func (r *Record) readHeader(reader io.Reader) error {
-	var buf [recordHeaderLen]byte
-	if _, err := io.ReadFull(reader, buf[:]); err != nil {
+func (r *Record) readHeader(sr io.SectionReader) error {
+	buf := make([]byte, recordHeaderLen)
+	fmt.Println(sr.Size())
+	if _, err := sr.Read(buf); err != nil {
 		return err
 	}
 	b := readBuf(buf[:])
@@ -81,6 +88,9 @@ func (r *Record) String() string {
 func (r *Record) isMaster() bool {
 	return r.flags & 0x1 != 0
 }
+//func (record *Record) hasDataDescriptor() bool {
+//	return f.Flags&0x8 != 0
+//}
 func (r *Record) isConstant() bool {
 	return r.flags & 0x40 != 0
 }
@@ -92,22 +102,33 @@ func (r *Record) isMarker() bool {
 }
 
 
-func (r *Record) readFields() error {
+func (r *Record) readFields(reader io.ReaderAt) error {
 
-	rs := io.NewSectionReader(r.readerAt, recordHeaderLen, int64(r.dataSize) + int64(recordHeaderLen))
-	if _, err := rs.Seek(0, io.SeekStart); err != nil {
-		return err
-	}
+	//rs := io.NewSectionReader(r.readerAt, recordHeaderLen, int64(r.dataSize) + int64(recordHeaderLen))
+	//if _, err := rs.Seek(0, io.SeekStart); err != nil {
+	//	return err
+	//}
 
-	reader := bufio.NewReader(rs)
+	//reader := bufio.NewReader(rs)
+
+	off := r.off + recordHeaderLen
+
+	//rs := io.NewSectionReader(reader, off, int64(r.dataSize))
 
 	r.fields = make([]*Field, 0)
 
 	// process all field headers
 	for {
 
-		field := &Field{record: r, readerAt: rs, zipsize: int64(r.dataSize)}
-		err := field.readHeader(reader)
+		headerReader := io.NewSectionReader(reader, off, fieldHeaderLen)
+
+		field := &Field{record: r, off: off}
+		err := field.readHeader(*headerReader)
+
+		off += fieldHeaderLen
+
+		sr := io.NewSectionReader(reader, off, field.Size())
+		field.sr = sr
 
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
 			break
@@ -116,38 +137,15 @@ func (r *Record) readFields() error {
 			return err
 		}
 
-		//field.dataSectionReader := io.NewSectionReader(r.readerAt, rs.Seek(), 1000) //int64(field.dataSize) + int64(fieldHeaderLen))
-		//
-		////reader := bufio.NewReader(rs)
-		//
-		//field.data = make([]byte, int64(field.dataSize + 20))
-		//
-		////var buf [recordHeaderLen]byte
-		//if _, err := field.dataSectionReader.Read(field.data); err != nil {
-		//	return err
-		//}
+		field.readData(reader)
 
-		//fmt.Println(field.data)
 
-		field.readData()
+		off += int64(field.dataSize)
 
 		r.fields = append(r.fields, field)
-		// skip past rest of data
 
-		//buf.Discard(int(field.dataSize))
 
-		//fmt.Println(field)
-
-		//buf = buf[field.dataSize:]
 	}
-
-	// at this point, only the headers for each field has been grabbed
-
-	// now process the data for each field
-
-	//for field := range r.fields {
-	//	field.readData()
-	//}
 
 	return nil
 }

@@ -2,32 +2,50 @@ package esm
 
 import (
 	"io"
-	"bufio"
+
 )
 
 type Root struct {
 	rootRecord *Record
+	sr *io.SectionReader
+	r *io.Reader
+	off int64
+	readerAt         io.ReaderAt
+	readerSize      int64
 	groups []*Group
 }
 
 
+func (root *Root) Size() int64 {
+	return root.readerSize
+}
 
-func (r *Record) readGroups() error {
 
-	rs := io.NewSectionReader(r.readerAt, groupHeaderLen, int64(r.dataSize) + int64(recordHeaderLen))
-	if _, err := rs.Seek(0, io.SeekStart); err != nil {
+func (root *Root) readGroups(reader io.ReaderAt) error {
+
+	// read from the start of the file + recordSize depth to start reading the groups
+	groupsSr := io.NewSectionReader(root.readerAt, root.rootRecord.Size(), 1<<63-1)
+
+	if _, err := groupsSr.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 
-	reader := bufio.NewReader(rs)
+	root.groups = make([]*Group, 0)
 
-	r.fields = make([]*Field, 0)
+	var off int64 = root.off + root.rootRecord.Size()
 
-	// process all field headers
 	for {
+		headerReader := io.NewSectionReader(reader, off, groupHeaderLen)
 
-		field := &Field{record: r, readerAt: rs, zipsize: int64(r.dataSize)}
-		err := field.readHeader(reader)
+		group := &Group{root: root, off: off}
+		err := group.readHeader(*headerReader)
+
+		off += groupHeaderLen
+
+		sr := io.NewSectionReader(reader, off, group.Size() - groupHeaderLen)
+		group.sr = sr
+
+		off += group.Size() - groupHeaderLen
 
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
 			break
@@ -36,38 +54,10 @@ func (r *Record) readGroups() error {
 			return err
 		}
 
-		//field.dataSectionReader := io.NewSectionReader(r.readerAt, rs.Seek(), 1000) //int64(field.dataSize) + int64(fieldHeaderLen))
-		//
-		////reader := bufio.NewReader(rs)
-		//
-		//field.data = make([]byte, int64(field.dataSize + 20))
-		//
-		////var buf [recordHeaderLen]byte
-		//if _, err := field.dataSectionReader.Read(field.data); err != nil {
-		//	return err
-		//}
+		group.readRecords(reader)
 
-		//fmt.Println(field.data)
-
-		field.readData()
-
-		r.fields = append(r.fields, field)
-		// skip past rest of data
-
-		//buf.Discard(int(field.dataSize))
-
-		//fmt.Println(field)
-
-		//buf = buf[field.dataSize:]
+		root.groups = append(root.groups, group)
 	}
-
-	// at this point, only the headers for each field has been grabbed
-
-	// now process the data for each field
-
-	//for field := range r.fields {
-	//	field.readData()
-	//}
 
 	return nil
 }

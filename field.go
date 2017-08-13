@@ -18,8 +18,10 @@ type Field struct {
 	FieldHeader
 	record *Record
 	readerAt io.ReaderAt
-	zipsize int64
-	dataSectionReader *io.SectionReader
+	readerSize int64
+	//dataSectionReader *io.SectionReader
+	sr *io.SectionReader
+	off int64
 	//headerOffset int64
 	//data []byte
 	//dataBuf []byte
@@ -28,12 +30,20 @@ type Field struct {
 }
 
 
-func (f *Field) readHeader(r io.Reader) error {
-	var bufHeader [fieldHeaderLen]byte
-	if _, err := io.ReadFull(r, bufHeader[:]); err != nil {
+// calculates the size of all the things (header and all data)
+func (f *Field) Size() int64 {
+	return int64(fieldHeaderLen) + int64(f.dataSize)
+}
+
+
+func (f *Field) readHeader(sr io.SectionReader) error {
+	buf := make([]byte, fieldHeaderLen)
+	//fmt.Println(sr.Size())
+	if _, err := sr.Read(buf); err != nil {
 		return err
 	}
-	b := readBuf(bufHeader[:])
+
+	b := readBuf(buf[:])
 
 	// TODO: validate signature is in the list of allowed Record header types?
 
@@ -43,9 +53,9 @@ func (f *Field) readHeader(r io.Reader) error {
 
 	f.dataBuf = make([]byte, f.dataSize)
 
-	if _, err := io.ReadFull(r, f.dataBuf); err != nil {
-		return err
-	}
+	//if _, err := io.ReadFull(r, f.dataBuf); err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -58,14 +68,22 @@ func (f *Field) String() string {
 	return str
 }
 
-func (f *Field) readData() error {
+func (f *Field) readData(reader io.ReaderAt) error {
 
-	rs := io.NewSectionReader(f.readerAt, recordHeaderLen, int64(f.dataSize) + int64(recordHeaderLen))
-	if _, err := rs.Seek(0, io.SeekStart); err != nil {
-		return err
-	}
+	sr := io.NewSectionReader(reader, f.off + fieldHeaderLen, f.Size() - fieldHeaderLen)
+	_ = sr
+
+	//rs := io.NewSectionReader(reader, f.off + fieldHeaderLen, int64(f.dataSize))
+	//if _, err := f.sr.Seek(0, io.SeekStart); err != nil {
+	//	return err
+	//}
 
 	//buf := bufio.NewReader(rs)
+
+
+	if _, err := io.ReadFull(sr, f.dataBuf); err != nil {
+		return err
+	}
 
 	// if type is HEDR, read struct
 	data, err := f.getFieldStructure()
