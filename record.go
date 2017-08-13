@@ -41,7 +41,7 @@ func (r *Record) Size() int64 {
 
 func (r *Record) readHeader(sr io.SectionReader) error {
 	buf := make([]byte, recordHeaderLen)
-	fmt.Println(sr.Size())
+	//fmt.Println(sr.Size())
 	if _, err := sr.Read(buf); err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ type GroupHeader struct {
 
 	_type char4
 	groupSize uint32
-	label uint32
+	label char4
 	groupType uint32
 	stamp uint16
 	unknown uint16
@@ -53,7 +53,7 @@ func (g *Group) readHeader(sr io.SectionReader) error {
 
 	g._type = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
 	g.groupSize = b.uint32()
-	g.label = b.uint32()
+	g.label = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
 	g.groupType = b.uint32()
 	g.stamp = b.uint16()
 	g.unknown = b.uint16()
@@ -74,7 +74,7 @@ func (g *Group) isValid() bool {
 
 
 func (g *Group) Type() (string){
-	return fmt.Sprintf("%s", g._type)
+	return fmt.Sprintf("%s", g.label)
 }
 
 func (g *Group) String() string {
@@ -106,12 +106,12 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 
 	g.records = make([]*Record, 0)
 
-	var off int64 = g.off
+	var off int64 = g.off + groupHeaderLen
 
 	for {
 		headerReader := io.NewSectionReader(reader, off, recordHeaderLen)
 
-		record := &Record{group: g}
+		record := &Record{group: g, off:off}
 		err := record.readHeader(*headerReader)
 
 		off += recordHeaderLen
@@ -119,7 +119,7 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 		sr := io.NewSectionReader(reader, off, record.Size())
 		record.sr = sr
 
-		off += record.Size()
+		off += record.Size() - recordHeaderLen
 
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
 			break
