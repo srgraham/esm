@@ -90,7 +90,7 @@ func (z *Reader) init(reader io.ReaderAt, size int64) error {
 		return err
 	}
 
-	// check its a TES4 record
+	// check its a TES4 parentRecord
 	if binary.BigEndian.Uint32([]byte(rootRecord._type[:])) != fileHeaderSignature {
 		return ErrFormat
 	}
@@ -99,15 +99,22 @@ func (z *Reader) init(reader io.ReaderAt, size int64) error {
 		return ErrFormat
 	}
 
-	// read the fields of the root record
-	rootRecord.readFields(reader)
+	// read the fields of the parentRoot parentRecord
+	err = rootRecord.readFields(reader)
+
+	if err != nil {
+		return err
+	}
 
 	// we have the TES4 data. now lets grab the groups
 	root := &Root{rootRecord : rootRecord, readerAt: reader, readerSize: size, off: off}
 
-	root.readGroups(reader)
+	err = root.readGroups(reader)
+	if err != nil {
+		return err
+	}
 
-	//root.
+	//parentRoot.
 	_ = root
 
 	return nil

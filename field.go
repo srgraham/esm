@@ -16,17 +16,11 @@ type FieldHeader struct {
 
 type Field struct {
 	FieldHeader
-	record *Record
-	readerAt io.ReaderAt
-	readerSize int64
-	//dataSectionReader *io.SectionReader
-	sr *io.SectionReader
-	off int64
-	//headerOffset int64
-	//data []byte
-	//dataBuf []byte
-	dataBuf readBuf
-	data interface{}
+	parentRecord *Record
+	sr           *io.SectionReader
+	off          int64
+	dataBuf      readBuf
+	data         interface{}
 }
 
 
@@ -52,10 +46,6 @@ func (f *Field) readHeader(sr io.SectionReader) error {
 	f.dataSize = b.uint16()
 
 	f.dataBuf = make([]byte, f.dataSize)
-
-	//if _, err := io.ReadFull(r, f.dataBuf); err != nil {
-	//	return err
-	//}
 
 	return nil
 }
@@ -112,17 +102,69 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 		return msg, err
 	}
 
+	if t.Kind() == reflect.Func {
+		// todo: allow the return of a reflect.Type instead of interface{} and have it just continue thru
+		var is_value bool
+		var is_type bool
+		var args []reflect.Value
+
+		switch zero_type := zeroValue.(type) {
+		case func(readBuf, Field) interface{}:
+			is_value = true
+			args = []reflect.Value{reflect.ValueOf(f.dataBuf), reflect.ValueOf(*f)}
+		case func(readBuf) interface{}:
+			is_value = true
+			args = []reflect.Value{reflect.ValueOf(f.dataBuf)}
+
+		case func(readBuf, Record) interface{}:
+			is_value = true
+			args = []reflect.Value{reflect.ValueOf(f.dataBuf), reflect.ValueOf(*f.parentRecord)}
+
+		// TYPES!
+		case func(readBuf, Field) reflect.Type:
+			is_type = true
+			args = []reflect.Value{reflect.ValueOf(f.dataBuf), reflect.ValueOf(*f)}
+		case func(readBuf) reflect.Type:
+			is_type = true
+			args = []reflect.Value{reflect.ValueOf(f.dataBuf)}
+
+		case func(readBuf, Record) reflect.Type:
+			is_type = true
+			args = []reflect.Value{reflect.ValueOf(f.dataBuf), reflect.ValueOf(*f.parentRecord)}
+
+
+
+
+		default:
+			msg := fmt.Errorf("Unimplemented field.getFieldStructure() Func type for %s.%s: '%#v'", recordTypeStr, fieldTypeStr, zero_type)
+			return nil, msg
+		}
+
+		if is_value {
+			out := reflect.ValueOf(zeroValue).Call(args)[0].Interface()
+			return out, nil
+		}
+		if is_type {
+			t = reflect.ValueOf(zeroValue).Call(args)[0].Interface().(reflect.Type)
+		}
+
+		// otherwise, let it pass thru bc its a reflect.Type!
+	}
+
 	v := reflect.New(t)
 	f.dataBuf.readType(t, v.Elem())
 
-	return v.Elem(), nil
+	out_value := v.Elem().Interface()
+	_ = out_value
+
+	return out_value, nil
 }
 
 func (f *Field) Type() (string) {
 	return fmt.Sprintf("%s", f._type)
 }
 func (f *Field) RecordType() (string) {
-	return f.record.Type()
+	return f.parentRecord.Type()
 }
 
 

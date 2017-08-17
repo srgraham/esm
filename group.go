@@ -1,17 +1,12 @@
 package esm
 
-import "io"
 import (
+	"io"
 	"encoding/binary"
 	"fmt"
 )
 
 type GroupHeader struct {
-	// Name is the name of the file.
-	// It must be a relative path: it must not start with a drive
-	// letter (e.g. C:) or leading slash, and only forward slashes
-	// are allowed.
-
 	_type char4
 	groupSize uint32
 	label char4
@@ -25,12 +20,9 @@ type GroupHeader struct {
 
 type Group struct {
 	GroupHeader
-	root *Root
-	sr *io.SectionReader
-	off int64
-	readerAt io.ReaderAt
-	readerSize int64
-	//headerOffset int64
+	parentRoot *Root
+	sr         *io.SectionReader
+	off        int64
 	records []*Record
 }
 
@@ -82,27 +74,12 @@ func (g *Group) String() string {
 	for _, record := range g.records {
 		str += fmt.Sprintf("%s", record.Type()) + ", "
 	}
-	//_type [4]byte
-	//dataSize uint32
-	//flags uint32
-	//id uint32
-	//revision uint32
-	//version uint16
-	//unknown uint16
-	//data []uint8
 
 	return str
 }
 
 
 func (g *Group) readRecords(reader io.ReaderAt) error {
-
-
-	// read from the start of the file + recordSize depth to start reading the groups
-	//recordsSr := io.NewSectionReader(g.readerAt, 0, g.Size())
-	//if _, err := recordsSr.Seek(0, io.SeekStart); err != nil {
-	//	return err
-	//}
 
 	g.records = make([]*Record, 0)
 
@@ -111,7 +88,7 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 	for off < g.off + g.Size() {
 		headerReader := io.NewSectionReader(reader, off, recordHeaderLen)
 
-		record := &Record{group: g, off:off}
+		record := &Record{parentGroup: g, off: off}
 		err := record.readHeader(*headerReader)
 
 		off += recordHeaderLen
@@ -130,7 +107,10 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 			return err
 		}
 
-		record.readFields(reader)
+		err = record.readFields(reader)
+		if err != nil {
+			return err
+		}
 
 		g.records = append(g.records, record)
 	}
@@ -141,74 +121,6 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 
 
 
-
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//rs := io.NewSectionReader(g.readerAt, recordHeaderLen, int64(g.groupSize))
-	//if _, err := rs.Seek(0, io.SeekStart); err != nil {
-	//	return err
-	//}
-	//
-	//reader := bufio.NewReader(rs)
-	//
-	//g.records = make([]*Record, 0)
-	//
-	//// process all field headers
-	//for {
-	//
-	//	record := &Record{group: g, readerAt: rs, readerSize: int64(g.groupSize)}
-	//	err := record.readHeader(reader)
-	//
-	//	if err == ErrFormat || err == io.ErrUnexpectedEOF {
-	//		break
-	//	}
-	//	if err != nil {
-	//		return err
-	//	}
-	//
-	//	//record.dataSectionReader := io.NewSectionReader(g.readerAt, rs.Seek(), 1000) //int64(record.dataSize) + int64(fieldHeaderLen))
-	//	//
-	//	////reader := bufio.NewReader(rs)
-	//	//
-	//	//record.data = make([]byte, int64(record.dataSize + 20))
-	//	//
-	//	////var buf [recordHeaderLen]byte
-	//	//if _, err := record.dataSectionReader.Read(record.data); err != nil {
-	//	//	return err
-	//	//}
-	//
-	//	//fmt.Println(record.data)
-	//
-	//	record.readFields()
-	//
-	//	g.records = append(g.records, record)
-	//	// skip past rest of data
-	//
-	//	//buf.Discard(int(record.dataSize))
-	//
-	//	//fmt.Println(record)
-	//
-	//	//buf = buf[record.dataSize:]
-	//}
-	//
-	//// at this point, only the headers for each record has been grabbed
-	//
-	//// now process the data for each record
-	//
-	////for record := range g.records {
-	////	record.readData()
-	////}
-	//
-	//return nil
 }
 
 

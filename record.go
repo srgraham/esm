@@ -25,13 +25,10 @@ type RecordHeader struct {
 
 type Record struct {
 	RecordHeader
-	group *Group
-	sr *io.SectionReader
-	off int64
-	//readerAt         io.ReaderAt
-	//readerSize      int64
-	//headerOffset int64
-	fields []*Field
+	parentGroup *Group
+	sr          *io.SectionReader
+	off         int64
+	fields      []*Field
 }
 
 // calculates the size of all the things (header and all data)
@@ -88,7 +85,7 @@ func (r *Record) String() string {
 func (r *Record) isMaster() bool {
 	return r.flags & 0x1 != 0
 }
-//func (record *Record) hasDataDescriptor() bool {
+//func (parentRecord *Record) hasDataDescriptor() bool {
 //	return f.Flags&0x8 != 0
 //}
 func (r *Record) isConstant() bool {
@@ -122,7 +119,7 @@ func (r *Record) readFields(reader io.ReaderAt) error {
 
 		headerReader := io.NewSectionReader(reader, off, fieldHeaderLen)
 
-		field := &Field{record: r, off: off}
+		field := &Field{parentRecord: r, off: off}
 		err := field.readHeader(*headerReader)
 
 		off += fieldHeaderLen
@@ -137,7 +134,10 @@ func (r *Record) readFields(reader io.ReaderAt) error {
 			return err
 		}
 
-		field.readData(reader)
+		err = field.readData(reader)
+		if err != nil {
+			return err
+		}
 
 
 		off += int64(field.dataSize)
@@ -150,7 +150,15 @@ func (r *Record) readFields(reader io.ReaderAt) error {
 	return nil
 }
 
-
+func (r *Record) fieldsByType(field_type string) []*Field {
+	fields := make([]*Field, 0)
+	for _, field := range r.fields {
+		if field.Type() == field_type {
+			fields = append(fields, field)
+		}
+	}
+	return fields
+}
 
 
 

@@ -1,7 +1,6 @@
 package esm
 
 
-
 const (
 
 
@@ -73,10 +72,9 @@ type wzstring string
 type zstring string
 
 
-
-
-
-
+func (z zstring) String() string {
+	return string(z)
+}
 
 
 

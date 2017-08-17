@@ -148,6 +148,20 @@ func (b *readBuf) Human() string {
 func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 	//fmt.Println(t.Kind())
 	switch t.Kind() {
+	//case reflect.Func:
+	//
+	//	swap := func(in []reflect.Value) []reflect.Value {
+	//		return []reflect.Value{in[1], in[0]}
+	//	}
+	//
+	//	var makeSwap func()
+	//
+	//
+	//	//args := [reflect.ValueOf(b)]
+	//	newFn := reflect.MakeFunc(v, v)
+	//
+	//	v.Set(newFn)
+	//	fmt.Printf("%#v", &v)
 	case reflect.Map:
 		v.Set(reflect.MakeMap(t))
 	case reflect.Struct:
@@ -203,6 +217,13 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 
 		case zstring:
 			rv = reflect.ValueOf(b.zstring())
+
+		//case func(readBuf, Field) interface{}:
+		//	fn := v //reflect.ValueOf(v)
+		//	fmt.Printf("555 %#v", fn, fn.Interface())
+		//	args := []reflect.Value{}
+		//	result := fn.Call(args)
+		//	rv = reflect.ValueOf(result)
 
 		default:
 			panic(fmt.Errorf("cannot decode type '%s'", v.Type()))

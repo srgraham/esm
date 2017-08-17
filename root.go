@@ -24,7 +24,7 @@ func (root *Root) Size() int64 {
 func (root *Root) readGroups(reader io.ReaderAt) error {
 
 	// read from the start of the file + recordSize depth to start reading the groups
-	groupsSr := io.NewSectionReader(root.readerAt, root.rootRecord.Size(), 1<<63-1)
+	groupsSr := io.NewSectionReader(root.readerAt, root.rootRecord.Size(), root.Size())
 
 	if _, err := groupsSr.Seek(0, io.SeekStart); err != nil {
 		return err
@@ -37,7 +37,7 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 	for off < root.off + root.Size() {
 		headerReader := io.NewSectionReader(reader, off, groupHeaderLen)
 
-		group := &Group{root: root, off: off}
+		group := &Group{parentRoot: root, off: off}
 		err := group.readHeader(*headerReader)
 
 		off += groupHeaderLen
@@ -54,7 +54,10 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 			return err
 		}
 
-		group.readRecords(reader)
+		err = group.readRecords(reader)
+		if err != nil {
+			return err
+		}
 
 		root.groups = append(root.groups, group)
 	}
