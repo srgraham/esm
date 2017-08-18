@@ -32,6 +32,10 @@ func (g *Group) Size() int64 {
 	return int64(g.groupSize + groupHeaderLen)
 }
 
+func (g *Group) Root() *Root {
+	return g.parentRoot
+}
+
 
 func (g *Group) readHeader(sr io.SectionReader) error {
 

@@ -20,6 +20,10 @@ func (root *Root) Size() int64 {
 	return root.readerSize
 }
 
+func (root *Root) IsLocalized() bool {
+	return root.rootRecord.isLocalized()
+}
+
 
 func (root *Root) readGroups(reader io.ReaderAt) error {
 

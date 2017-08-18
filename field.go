@@ -29,6 +29,10 @@ func (f *Field) Size() int64 {
 	return int64(fieldHeaderLen) + int64(f.dataSize)
 }
 
+func (f *Field) Root() *Root {
+	return f.parentRecord.Root()
+}
+
 
 func (f *Field) readHeader(sr io.SectionReader) error {
 	buf := make([]byte, fieldHeaderLen)
@@ -99,6 +103,7 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 	if t == nil {
 		err = ErrUnimplementedField
 		msg := fmt.Sprintf("### Unimplemented field %s.%s: %s", recordTypeStr, fieldTypeStr, f.dataBuf.Human())
+		LogUnimplementedField(recordTypeStr, fieldTypeStr, f.dataBuf)
 		return msg, err
 	}
 
@@ -152,7 +157,7 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 	}
 
 	v := reflect.New(t)
-	f.dataBuf.readType(t, v.Elem())
+	f.dataBuf.readType(t, v.Elem(), f)
 
 	out_value := v.Elem().Interface()
 	_ = out_value

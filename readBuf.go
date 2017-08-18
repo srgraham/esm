@@ -113,14 +113,22 @@ func (b *readBuf) float() {panic("Deprecated readBuf type")}
 //// todo: write special parser for this
 //func(b *readBuf) vsval() { return []byte }
 //
-//func(b *readBuf) formid() { return uint32 }
+func(b *readBuf) formid() formid { return formid(b.uint32()) }
+
 //func(b *readBuf) iref() { return uint32 }
 //func(b *readBuf) hash() { //return8]uint8 }
 //func(b *readBuf) filetime() { return uint64 }
 //func(b *readBuf) systemtime() { // return6]uint8 }
 //func(b *readBuf) rgb() { return uint32 }
 //
-//func(b *readBuf) lstring() { return string }
+func(b *readBuf) lstring(root *Root) lstring {
+	if root.IsLocalized() {
+		lookup := b.uint32()
+		return lstring(lookup)
+	}
+	return lstring(b.zstring())
+}
+
 //func(b *readBuf) dlstring() { return string }
 //func(b *readBuf) ilstring() { return string }
 //func(b *readBuf) bstring() { return string }
@@ -145,7 +153,7 @@ func (b *readBuf) Human() string {
 
 
 
-func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
+func (b *readBuf) readType(t reflect.Type, v reflect.Value, f *Field) (error) {
 	//fmt.Println(t.Kind())
 	switch t.Kind() {
 	//case reflect.Func:
@@ -169,7 +177,7 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 		for i := 0; i < fieldCount; i+=1 {
 			structFieldType := t.Field(i)
 			structFieldValue := v.Field(i)
-			b.readType(structFieldType.Type, structFieldValue)
+			b.readType(structFieldType.Type, structFieldValue, f)
 		}
 	default:
 
@@ -217,6 +225,12 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value) (error) {
 
 		case zstring:
 			rv = reflect.ValueOf(b.zstring())
+
+		case lstring:
+
+			rv = reflect.ValueOf(b.lstring(f.Root()))
+		case formid:
+			rv = reflect.ValueOf(b.formid())
 
 		//case func(readBuf, Field) interface{}:
 		//	fn := v //reflect.ValueOf(v)

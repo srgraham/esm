@@ -91,11 +91,19 @@ func (r *Record) isMaster() bool {
 func (r *Record) isConstant() bool {
 	return r.flags & 0x40 != 0
 }
+func (r *Record) isLocalized() bool {
+	return r.flags & 0x80 != 0
+}
 func (r *Record) isCompressed() bool {
 	return r.flags & 0x40000 != 0
 }
 func (r *Record) isMarker() bool {
 	return r.flags & 0x800000 != 0
+}
+
+
+func (r *Record) Root() *Root {
+	return r.parentGroup.Root()
 }
 
 

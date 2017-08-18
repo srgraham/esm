@@ -8,89 +8,92 @@ import (
 
 var FieldsStructLookup map[string]map[string]interface{}
 
+var UnimplementedFields map[string]map[string]bool
+
+var boolZero bool
+var uint8Zero uint8
+var uint16Zero uint16
+var uint32Zero uint32
+var uint64Zero uint64
+var int8Zero int8
+var int16Zero int16
+var int32Zero int32
+var int64Zero int64
+var float32Zero float32
+var float64Zero float64
+
+var nullZero null
+var charZero char
+var char4Zero char4
+var wcharZero wchar
+
+var vsvalZero vsval
+
+var formidZero formid
+var irefZero iref
+var hashZero hash
+var filetimeZero filetime
+var systemtimeZero systemtime
+var rgbZero rgb
+
+var lstringZero lstring
+var dlstringZero dlstring
+var ilstringZero ilstring
+var bstringZero bstring
+var bzstringZero bzstring
+var wstringZero wstring
+var wzstringZero wzstring
+var zstringZero zstring
+
+
+func MakeFieldStruct(label string) map[string]interface{} {
+	FieldsStructLookup[label] = make(map[string]interface{})
+
+	// also set base values
+
+	FieldsStructLookup[label]["EDID"] = zstringZero
+
+	return FieldsStructLookup[label]
+}
+
+func LogUnimplementedField(recordTypeStr string, fieldTypeStr string, dataBuf readBuf) {
+
+	if _, ok := UnimplementedFields[recordTypeStr]; !ok {
+		UnimplementedFields[recordTypeStr] = make(map[string]bool)
+	}
+	UnimplementedFields[recordTypeStr][fieldTypeStr] = true
+}
+
+func DumpUnimplementedFields() {
+	fmt.Println("---Unimplemented Fields---")
+	for recordType, recordFields := range UnimplementedFields {
+		var fieldTypes []string
+		for fieldType, _ := range recordFields {
+			fieldTypes = append(fieldTypes, fieldType)
+		}
+		fmt.Printf("%s: %s\n", recordType, fieldTypes)
+	}
+}
+
+
 func init() {
 
-	var boolZero bool
-	var uint8Zero uint8
-	var uint16Zero uint16
-	var uint32Zero uint32
-	var uint64Zero uint64
-	var int8Zero int8
-	var int16Zero int16
-	var int32Zero int32
-	var int64Zero int64
-	var float32Zero float32
-	var float64Zero float64
-
-	var nullZero null
-	var charZero char
-	var char4Zero char4
-	var wcharZero wchar
-
-	var vsvalZero vsval
-
-	var formidZero formid
-	var irefZero iref
-	var hashZero hash
-	var filetimeZero filetime
-	var systemtimeZero systemtime
-	var rgbZero rgb
-
-	var lstringZero lstring
-	var dlstringZero dlstring
-	var ilstringZero ilstring
-	var bstringZero bstring
-	var bzstringZero bzstring
-	var wstringZero wstring
-	var wzstringZero wzstring
-	var zstringZero zstring
-
-
-
-	_ = boolZero
-	_ = uint8Zero
-	_ = uint16Zero
-	_ = uint32Zero
-	_ = uint64Zero
-	_ = int8Zero
-	_ = int16Zero
-	_ = int32Zero
-	_ = int64Zero
-	_ = float32Zero
-	_ = float64Zero
-	_ = nullZero
-	_ = charZero
-	_ = char4Zero
-	_ = wcharZero
-	_ = vsvalZero
-	_ = formidZero
-	_ = irefZero
-	_ = hashZero
-	_ = filetimeZero
-	_ = systemtimeZero
-	_ = rgbZero
-	_ = lstringZero
-	_ = dlstringZero
-	_ = ilstringZero
-	_ = bstringZero
-	_ = bzstringZero
-	_ = wstringZero
-	_ = wzstringZero
-	_ = zstringZero
 
 
 
 
 
 
-
-
+	UnimplementedFields = make(map[string]map[string]bool)
 	FieldsStructLookup = make(map[string]map[string]interface{})
 
+	TES4 := MakeFieldStruct("TES4")
+	GMST := MakeFieldStruct("GMST")
+	MESG := MakeFieldStruct("MESG")
 
-	// TES4
-	FieldsStructLookup["TES4"] = make(map[string]interface{})
-	TES4 := FieldsStructLookup["TES4"]
+
+
+
 
 	TES4["HEDR"] = struct {
 		Version      float32
@@ -105,10 +108,6 @@ func init() {
 
 
 	// GMST
-	FieldsStructLookup["GMST"] = make(map[string]interface{})
-	GMST := FieldsStructLookup["GMST"]
-
-	GMST["EDID"] = zstringZero
 
 	GMST["DATA"] = func (b readBuf, record Record) reflect.Type {
 		var firstChar byte
@@ -129,16 +128,23 @@ func init() {
 			return reflect.TypeOf(uint32Zero)
 		case 'i':
 			return reflect.TypeOf(uint32Zero)
+		case 'u':
+			return reflect.TypeOf(uint32Zero)
 		case 'f':
 			return reflect.TypeOf(float32Zero)
-		case 'l':
+		case 's':
 			return reflect.TypeOf(lstringZero)
 		default:
 			panic(fmt.Errorf("Couldnt figure out type for char '%c'", firstChar))
 		}
-
-
 		return nil
 	}
+
+	// MESG
+	MESG["DESC"] = lstringZero
+	MESG["INAM"] = uint32Zero
+	//MESG["QNAM"] = formidZero
+	MESG["DNAM"] = uint32Zero
+
 
 }

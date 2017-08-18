@@ -114,8 +114,7 @@ func (z *Reader) init(reader io.ReaderAt, size int64) error {
 		return err
 	}
 
-	//parentRoot.
-	_ = root
+	DumpUnimplementedFields()
 
 	return nil
 
