@@ -3,6 +3,7 @@ package esm
 import (
 	"io"
 
+	"fmt"
 )
 
 type Root struct {
@@ -13,6 +14,7 @@ type Root struct {
 	readerAt         io.ReaderAt
 	readerSize      int64
 	groups []*Group
+	allowedGroupTypes map[string]bool
 }
 
 
@@ -22,6 +24,20 @@ func (root *Root) Size() int64 {
 
 func (root *Root) IsLocalized() bool {
 	return root.rootRecord.isLocalized()
+}
+
+
+func (root *Root) AllowGroup(groupType string) {
+	if root.allowedGroupTypes == nil {
+		root.allowedGroupTypes = make(map[string]bool)
+	}
+	root.allowedGroupTypes[groupType] = true
+}
+func (root *Root) DisallowGroup(groupType string) {
+	if root.allowedGroupTypes == nil {
+		root.allowedGroupTypes = make(map[string]bool)
+	}
+	root.allowedGroupTypes[groupType] = false
 }
 
 
@@ -58,9 +74,13 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 			return err
 		}
 
-		err = group.readRecords(reader)
-		if err != nil {
-			return err
+		if isAllowedGroupType, ok := root.allowedGroupTypes[group.Type()]; ok && isAllowedGroupType {
+			err = group.readRecords(reader)
+			if err != nil {
+				return err
+			}
+		} else {
+			fmt.Printf("Skipping GROUP read for '%s'\n", group.Type())
 		}
 
 		root.groups = append(root.groups, group)

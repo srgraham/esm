@@ -45,6 +45,15 @@ var wstringZero wstring
 var wzstringZero wzstring
 var zstringZero zstring
 
+type OBNDZero struct {
+	X1 int16
+	Y1 int16
+	Z1 int16
+	X2 int16
+	Y2 int16
+	Z2 int16
+}
+
 
 func MakeFieldStruct(label string) map[string]interface{} {
 	FieldsStructLookup[label] = make(map[string]interface{})
@@ -52,6 +61,35 @@ func MakeFieldStruct(label string) map[string]interface{} {
 	// also set base values
 
 	FieldsStructLookup[label]["EDID"] = zstringZero
+
+	FieldsStructLookup[label]["KSIZ"] = uint32Zero
+
+	FieldsStructLookup[label]["KWDA"] = func (b readBuf, record Record) interface{} {
+
+		fieldKSIZ := record.fieldsByType("KSIZ")[0]
+
+		var count uint32
+		var ok bool
+
+		if count, ok = fieldKSIZ.data.(uint32); !ok {
+			panic(fmt.Errorf("Couldnt read count of KSIZ for KWDA"))
+		}
+
+		kwdas := make([]formid, count)
+
+		for i := uint32(0); i < count; i += 1 {
+			kwdas[i] = b.formid()
+		}
+
+		return kwdas
+	}
+
+
+
+
+
+
+
 
 	return FieldsStructLookup[label]
 }
@@ -90,6 +128,8 @@ func init() {
 	TES4 := MakeFieldStruct("TES4")
 	GMST := MakeFieldStruct("GMST")
 	MESG := MakeFieldStruct("MESG")
+	STAT := MakeFieldStruct("STAT")
+	FURN := MakeFieldStruct("FURN")
 
 
 
@@ -145,6 +185,12 @@ func init() {
 	MESG["INAM"] = uint32Zero
 	//MESG["QNAM"] = formidZero
 	MESG["DNAM"] = uint32Zero
+
+	STAT["OBND"] = OBNDZero{}
+
+	FURN["OBND"] = OBNDZero{}
+	FURN["FULL"] = lstringZero
+
 
 
 }
