@@ -15,7 +15,7 @@ func TestXxx(t *testing.T) {
 	//r, err := esm.OpenReader("./ShellRain.esp")
 
 	allowedGroupTypes := []string{
-		"DOOR",
+		//"DOOR",
 		//"ECZN",
 		//"EQUP",
 		//"FLST",
@@ -67,11 +67,8 @@ func TestXxx(t *testing.T) {
 		//"TXST",
 		//"WATR",
 		//"WEAP",
-		//"WRLD",
+		"WRLD",
 		//"WTHR",
-		//"____",
-		//"____",
-		//"____",
 	}
 
 	r, err := esm.OpenReader("C:/Program Files (x86)/Steam/steamapps/common/Fallout 4/Data/Fallout4.esm", allowedGroupTypes)

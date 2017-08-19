@@ -109,9 +109,12 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 	// we have the TES4 data. now lets grab the groups
 	root := &Root{rootRecord : rootRecord, readerAt: reader, readerSize: size, off: off}
 
-	for _, allowedGroupType := range allowedGroups {
-		root.AllowGroup(allowedGroupType)
-	}
+	//for _, allowedGroupType := range allowedGroups {
+	//	root.AllowGroup(allowedGroupType)
+	//}
+
+	//root.AllowAllGroups()
+	//root.DisallowGroup("GRUP")
 
 	err = root.readGroups(reader)
 	if err != nil {

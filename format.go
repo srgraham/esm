@@ -85,6 +85,11 @@ func MakeFieldStruct(label string) map[string]interface{} {
 	}
 
 
+	FieldsStructLookup[label]["MODL"] = zstringZero
+
+	FieldsStructLookup[label]["OBND"] = OBNDZero{}
+
+
 
 
 
@@ -125,16 +130,11 @@ func init() {
 	UnimplementedFields = make(map[string]map[string]bool)
 	FieldsStructLookup = make(map[string]map[string]interface{})
 
+
+
+
+	/* TES4 */
 	TES4 := MakeFieldStruct("TES4")
-	GMST := MakeFieldStruct("GMST")
-	MESG := MakeFieldStruct("MESG")
-	STAT := MakeFieldStruct("STAT")
-	FURN := MakeFieldStruct("FURN")
-
-
-
-
-
 	TES4["HEDR"] = struct {
 		Version      float32
 		NumRecords   int32
@@ -147,8 +147,204 @@ func init() {
 	TES4["INTV"] = uint32Zero
 
 
-	// GMST
+	/* AACT */
+	AACT := MakeFieldStruct("AACT")
+	_ = AACT
 
+	/* ACTI */
+	ACTI := MakeFieldStruct("ACTI")
+	_ = ACTI
+
+	/* ADDN */
+	ADDN := MakeFieldStruct("ADDN")
+	_ = ADDN
+
+	/* AECH */
+	AECH := MakeFieldStruct("AECH")
+	_ = AECH
+
+	/* ALCH */
+	ALCH := MakeFieldStruct("ALCH")
+	_ = ALCH
+
+	/* AMDL */
+	AMDL := MakeFieldStruct("AMDL")
+	_ = AMDL
+
+	/* AMMO */
+	AMMO := MakeFieldStruct("AMMO")
+	_ = AMMO
+
+	/* ANIO */
+	ANIO := MakeFieldStruct("ANIO")
+	_ = ANIO
+
+	/* AORU */
+	AORU := MakeFieldStruct("AORU")
+	_ = AORU
+
+	/* ARMA */
+	ARMA := MakeFieldStruct("ARMA")
+	_ = ARMA
+
+	/* ARMO */
+	ARMO := MakeFieldStruct("ARMO")
+	_ = ARMO
+
+	/* ARTO */
+	ARTO := MakeFieldStruct("ARTO")
+	_ = ARTO
+
+	/* ASPC */
+	ASPC := MakeFieldStruct("ASPC")
+	_ = ASPC
+
+	/* ASTP */
+	ASTP := MakeFieldStruct("ASTP")
+	_ = ASTP
+
+	/* AVIF */
+	AVIF := MakeFieldStruct("AVIF")
+	_ = AVIF
+
+	/* BNDS */
+	BNDS := MakeFieldStruct("BNDS")
+	_ = BNDS
+
+	/* BOOK */
+	BOOK := MakeFieldStruct("BOOK")
+	_ = BOOK
+
+	/* BPTD */
+	BPTD := MakeFieldStruct("BPTD")
+	_ = BPTD
+
+	/* CAMS */
+	CAMS := MakeFieldStruct("CAMS")
+	_ = CAMS
+
+	/* CELL */
+	CELL := MakeFieldStruct("CELL")
+	_ = CELL
+
+	/* CLAS */
+	CLAS := MakeFieldStruct("CLAS")
+	_ = CLAS
+
+	/* CLFM */
+	CLFM := MakeFieldStruct("CLFM")
+	_ = CLFM
+
+	/* CLMT */
+	CLMT := MakeFieldStruct("CLMT")
+	_ = CLMT
+
+	/* CMPO */
+	CMPO := MakeFieldStruct("CMPO")
+	_ = CMPO
+
+	/* COBJ */
+	COBJ := MakeFieldStruct("COBJ")
+	_ = COBJ
+
+	/* COLL */
+	COLL := MakeFieldStruct("COLL")
+	_ = COLL
+
+	/* CONT */
+	CONT := MakeFieldStruct("CONT")
+	_ = CONT
+
+	/* CPTH */
+	CPTH := MakeFieldStruct("CPTH")
+	_ = CPTH
+
+	/* CSTY */
+	CSTY := MakeFieldStruct("CSTY")
+	_ = CSTY
+
+	/* DEBR */
+	DEBR := MakeFieldStruct("DEBR")
+	_ = DEBR
+
+	/* DFOB */
+	DFOB := MakeFieldStruct("DFOB")
+	_ = DFOB
+
+	/* DLVW */
+	DLVW := MakeFieldStruct("DLVW")
+	_ = DLVW
+
+	/* DMGT */
+	DMGT := MakeFieldStruct("DMGT")
+	_ = DMGT
+
+	/* DOBJ */
+	DOBJ := MakeFieldStruct("DOBJ")
+	_ = DOBJ
+
+	/* DOOR */
+	DOOR := MakeFieldStruct("DOOR")
+	_ = DOOR
+
+	/* ECZN */
+	ECZN := MakeFieldStruct("ECZN")
+	_ = ECZN
+
+	/* EFSH */
+	EFSH := MakeFieldStruct("EFSH")
+	_ = EFSH
+
+	/* ENCH */
+	ENCH := MakeFieldStruct("ENCH")
+	_ = ENCH
+
+	/* EQUP */
+	EQUP := MakeFieldStruct("EQUP")
+	_ = EQUP
+
+	/* EXPL */
+	EXPL := MakeFieldStruct("EXPL")
+	_ = EXPL
+
+	/* FACT */
+	FACT := MakeFieldStruct("FACT")
+	_ = FACT
+
+	/* FLOR */
+	FLOR := MakeFieldStruct("FLOR")
+	_ = FLOR
+
+	/* FLST */
+	FLST := MakeFieldStruct("FLST")
+	_ = FLST
+
+	/* FSTP */
+	FSTP := MakeFieldStruct("FSTP")
+	_ = FSTP
+
+	/* FSTS */
+	FSTS := MakeFieldStruct("FSTS")
+	_ = FSTS
+
+	/* FURN */
+	FURN := MakeFieldStruct("FURN")
+	FURN["FULL"] = lstringZero
+	FURN["FULL"] = lstringZero
+
+
+
+
+	/* GDRY */
+	GDRY := MakeFieldStruct("GDRY")
+	_ = GDRY
+
+	/* GLOB */
+	GLOB := MakeFieldStruct("GLOB")
+	_ = GLOB
+
+	/* GMST */
+	GMST := MakeFieldStruct("GMST")
 	GMST["DATA"] = func (b readBuf, record Record) reflect.Type {
 		var firstChar byte
 
@@ -180,16 +376,335 @@ func init() {
 		return nil
 	}
 
-	// MESG
+	/* GRAS */
+	GRAS := MakeFieldStruct("GRAS")
+	_ = GRAS
+
+
+	/* HAZD */
+	HAZD := MakeFieldStruct("HAZD")
+	_ = HAZD
+
+	/* HDPT */
+	HDPT := MakeFieldStruct("HDPT")
+	_ = HDPT
+
+	/* IDLE */
+	IDLE := MakeFieldStruct("IDLE")
+	_ = IDLE
+
+	/* IDLM */
+	IDLM := MakeFieldStruct("IDLM")
+	_ = IDLM
+
+	/* IMAD */
+	IMAD := MakeFieldStruct("IMAD")
+	_ = IMAD
+
+	/* IMGS */
+	IMGS := MakeFieldStruct("IMGS")
+	_ = IMGS
+
+	/* INGR */
+	INGR := MakeFieldStruct("INGR")
+	_ = INGR
+
+	/* INNR */
+	INNR := MakeFieldStruct("INNR")
+	_ = INNR
+
+	/* IPCT */
+	IPCT := MakeFieldStruct("IPCT")
+	_ = IPCT
+
+	/* IPDS */
+	IPDS := MakeFieldStruct("IPDS")
+	_ = IPDS
+
+	/* KEYM */
+	KEYM := MakeFieldStruct("KEYM")
+	_ = KEYM
+
+	/* KSSM */
+	KSSM := MakeFieldStruct("KSSM")
+	_ = KSSM
+
+	/* KYWD */
+	KYWD := MakeFieldStruct("KYWD")
+	_ = KYWD
+
+	/* LAYR */
+	LAYR := MakeFieldStruct("LAYR")
+	_ = LAYR
+
+	/* LAYZ */
+	LAYZ := MakeFieldStruct("LAYZ")
+	_ = LAYZ
+
+	/* LCRT */
+	LCRT := MakeFieldStruct("LCRT")
+	_ = LCRT
+
+	/* LCTN */
+	LCTN := MakeFieldStruct("LCTN")
+	_ = LCTN
+
+	/* LENS */
+	LENS := MakeFieldStruct("LENS")
+	_ = LENS
+
+	/* LGTM */
+	LGTM := MakeFieldStruct("LGTM")
+	_ = LGTM
+
+	/* LIGH */
+	LIGH := MakeFieldStruct("LIGH")
+	_ = LIGH
+
+	/* LSCR */
+	LSCR := MakeFieldStruct("LSCR")
+	_ = LSCR
+
+	/* LTEX */
+	LTEX := MakeFieldStruct("LTEX")
+	_ = LTEX
+
+	/* LVLI */
+	LVLI := MakeFieldStruct("LVLI")
+	_ = LVLI
+
+	/* LVLN */
+	LVLN := MakeFieldStruct("LVLN")
+	_ = LVLN
+
+	/* MATO */
+	MATO := MakeFieldStruct("MATO")
+	_ = MATO
+
+	/* MATT */
+	MATT := MakeFieldStruct("MATT")
+	_ = MATT
+
+	/* MESG */
+	MESG := MakeFieldStruct("MESG")
 	MESG["DESC"] = lstringZero
 	MESG["INAM"] = uint32Zero
 	//MESG["QNAM"] = formidZero
 	MESG["DNAM"] = uint32Zero
 
-	STAT["OBND"] = OBNDZero{}
+	/* MGEF */
+	MGEF := MakeFieldStruct("MGEF")
+	_ = MGEF
 
-	FURN["OBND"] = OBNDZero{}
-	FURN["FULL"] = lstringZero
+	/* MISC */
+	MISC := MakeFieldStruct("MISC")
+	_ = MISC
+
+	/* MOVT */
+	MOVT := MakeFieldStruct("MOVT")
+	_ = MOVT
+
+	/* MSTT */
+	MSTT := MakeFieldStruct("MSTT")
+	_ = MSTT
+
+	/* MSWP */
+	MSWP := MakeFieldStruct("MSWP")
+	_ = MSWP
+
+	/* MUSC */
+	MUSC := MakeFieldStruct("MUSC")
+	_ = MUSC
+
+	/* MUST */
+	MUST := MakeFieldStruct("MUST")
+	_ = MUST
+
+	/* NAVI */
+	NAVI := MakeFieldStruct("NAVI")
+	_ = NAVI
+
+	/* NOCM */
+	NOCM := MakeFieldStruct("NOCM")
+	_ = NOCM
+
+	/* NOTE */
+	NOTE := MakeFieldStruct("NOTE")
+	_ = NOTE
+
+	/* NPC_ */
+	NPC_ := MakeFieldStruct("NPC_")
+	_ = NPC_
+
+	/* OMOD */
+	OMOD := MakeFieldStruct("OMOD")
+	_ = OMOD
+
+	/* OTFT */
+	OTFT := MakeFieldStruct("OTFT")
+	_ = OTFT
+
+	/* OVIS */
+	OVIS := MakeFieldStruct("OVIS")
+	_ = OVIS
+
+	/* PACK */
+	PACK := MakeFieldStruct("PACK")
+	_ = PACK
+
+	/* PERK */
+	PERK := MakeFieldStruct("PERK")
+	_ = PERK
+
+	/* PGRE */
+	PGRE := MakeFieldStruct("PGRE")
+	_ = PGRE
+
+	/* PHZD */
+	PHZD := MakeFieldStruct("PHZD")
+	_ = PHZD
+
+	/* PKIN */
+	PKIN := MakeFieldStruct("PKIN")
+	_ = PKIN
+
+	/* PROJ */
+	PROJ := MakeFieldStruct("PROJ")
+	_ = PROJ
+
+	/* QUST */
+	QUST := MakeFieldStruct("QUST")
+	_ = QUST
+
+	/* RACE */
+	RACE := MakeFieldStruct("RACE")
+	_ = RACE
+
+	/* REFR */
+	REFR := MakeFieldStruct("REFR")
+	_ = REFR
+
+	/* REGN */
+	REGN := MakeFieldStruct("REGN")
+	_ = REGN
+
+	/* RELA */
+	RELA := MakeFieldStruct("RELA")
+	_ = RELA
+
+	/* REVB */
+	REVB := MakeFieldStruct("REVB")
+	_ = REVB
+
+	/* RFCT */
+	RFCT := MakeFieldStruct("RFCT")
+	_ = RFCT
+
+	/* RFGP */
+	RFGP := MakeFieldStruct("RFGP")
+	_ = RFGP
+
+	/* SCCO */
+	SCCO := MakeFieldStruct("SCCO")
+	_ = SCCO
+
+	/* SCOL */
+	SCOL := MakeFieldStruct("SCOL")
+	_ = SCOL
+
+	/* SCSN */
+	SCSN := MakeFieldStruct("SCSN")
+	_ = SCSN
+
+	/* SMBN */
+	SMBN := MakeFieldStruct("SMBN")
+	_ = SMBN
+
+	/* SMEN */
+	SMEN := MakeFieldStruct("SMEN")
+	_ = SMEN
+
+	/* SMQN */
+	SMQN := MakeFieldStruct("SMQN")
+	_ = SMQN
+
+	/* SNCT */
+	SNCT := MakeFieldStruct("SNCT")
+	_ = SNCT
+
+	/* SNDR */
+	SNDR := MakeFieldStruct("SNDR")
+	_ = SNDR
+
+	/* SOPM */
+	SOPM := MakeFieldStruct("SOPM")
+	_ = SOPM
+
+	/* SOUN */
+	SOUN := MakeFieldStruct("SOUN")
+	_ = SOUN
+
+	/* SPEL */
+	SPEL := MakeFieldStruct("SPEL")
+	_ = SPEL
+
+	/* SPGD */
+	SPGD := MakeFieldStruct("SPGD")
+	_ = SPGD
+
+	/* STAG */
+	STAG := MakeFieldStruct("STAG")
+	_ = STAG
+
+	/* STAT */
+	STAT := MakeFieldStruct("STAT")
+	_ = STAT
+
+	/* TACT */
+	TACT := MakeFieldStruct("TACT")
+	_ = TACT
+
+	/* TERM */
+	TERM := MakeFieldStruct("TERM")
+	_ = TERM
+
+	/* TREE */
+	TREE := MakeFieldStruct("TREE")
+	_ = TREE
+
+	/* TRNS */
+	TRNS := MakeFieldStruct("TRNS")
+	_ = TRNS
+
+	/* TXST */
+	TXST := MakeFieldStruct("TXST")
+	_ = TXST
+
+	/* VTYP */
+	VTYP := MakeFieldStruct("VTYP")
+	_ = VTYP
+
+	/* WATR */
+	WATR := MakeFieldStruct("WATR")
+	_ = WATR
+
+	/* WEAP */
+	WEAP := MakeFieldStruct("WEAP")
+	_ = WEAP
+
+	/* WRLD */
+	WRLD := MakeFieldStruct("WRLD")
+	_ = WRLD
+
+	/* WTHR */
+	WTHR := MakeFieldStruct("WTHR")
+	_ = WTHR
+
+	/* ZOOM */
+	ZOOM := MakeFieldStruct("ZOOM")
+	_ = ZOOM
+
+
 
 
 

@@ -39,6 +39,22 @@ func (root *Root) DisallowGroup(groupType string) {
 	}
 	root.allowedGroupTypes[groupType] = false
 }
+func (root *Root) AllowAllGroups() {
+	if root.allowedGroupTypes == nil {
+		root.allowedGroupTypes = make(map[string]bool)
+	}
+	for groupType, _ := range FieldsStructLookup {
+		root.allowedGroupTypes[groupType] = true
+	}
+}
+func (root *Root) DisallowAllGroups() {
+	if root.allowedGroupTypes == nil {
+		root.allowedGroupTypes = make(map[string]bool)
+	}
+	for groupType, _ := range FieldsStructLookup {
+		root.allowedGroupTypes[groupType] = false
+	}
+}
 
 
 func (root *Root) readGroups(reader io.ReaderAt) error {
@@ -81,6 +97,10 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 			}
 		} else {
 			fmt.Printf("Skipping GROUP read for '%s'\n", group.Type())
+			if _, ok := FieldsStructLookup[group.Type()]; !ok {
+				return fmt.Errorf("Missing definition for GROUP record type %s", group.Type())
+				//fmt.Printf("Missing definition for GROUP record type %s\n\n", group.Type())
+			}
 		}
 
 		root.groups = append(root.groups, group)
