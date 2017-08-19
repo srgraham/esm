@@ -4,6 +4,10 @@ import (
 	"io"
 	"encoding/binary"
 	"fmt"
+	"bytes"
+	"compress/zlib"
+	//"io/ioutil"
+	"io/ioutil"
 )
 
 type GroupHeader struct {
@@ -98,9 +102,8 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 		off += recordHeaderLen
 
 		sr := io.NewSectionReader(reader, off, record.Size() - recordHeaderLen)
+
 		record.sr = sr
-
-
 
 		off += record.Size() - recordHeaderLen
 
@@ -111,7 +114,57 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 			return err
 		}
 
-		err = record.readFields(reader)
+
+
+		// if zlib compressed, then swap reader out with uncompressed section
+		// FIXME: this looks like ass but idk how to do it correctly
+		if record.isCompressed() {
+
+			// get size of decompressed data
+			bufDataDecompSize := make([]byte, 4)
+
+			// get compressed data
+			bufDataComp := make([]byte, record.dataSize - 4)
+			if _, err := sr.ReadAt(bufDataDecompSize, 0); err != nil {
+				return err
+			}
+			bDataDecompSize := readBuf(bufDataDecompSize[:])
+
+			if _, err := sr.ReadAt(bufDataComp, 4); err != nil {
+				return err
+			}
+
+			// set record size to the new decomp size
+			record.dataSize = bDataDecompSize.uint32()
+
+			bDataComp := bufDataComp[:]
+
+			bCompReader := bytes.NewReader(bDataComp)
+
+			readCloserDecomp, err := zlib.NewReader(bCompReader)
+
+			if err != nil{
+				panic(err)
+			}
+
+			byteDecomp, err := ioutil.ReadAll(readCloserDecomp)
+
+			readerDecomp := bytes.NewReader(byteDecomp)
+
+			sr = io.NewSectionReader(readerDecomp, 0, int64(record.dataSize))
+
+			// record.readFields() skips over the record header bytes, so set it to negative that
+			record.off = -1 * recordHeaderLen
+
+			err = record.readFields(readerDecomp)
+
+		} else {
+			err = record.readFields(reader)
+		}
+
+
+		//err = record.readFields(reader)
+
 		if err != nil {
 			return err
 		}

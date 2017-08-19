@@ -15,11 +15,11 @@ func TestXxx(t *testing.T) {
 	//r, err := esm.OpenReader("./ShellRain.esp")
 
 	allowedGroupTypes := []string{
-		//"DOOR",
+		"DOOR",
 		//"ECZN",
 		//"EQUP",
 		//"FLST",
-		"FURN",
+		//"FURN",
 		//"GLOB",
 		//"GMST",
 		//"HAZD",

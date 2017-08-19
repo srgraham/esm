@@ -82,6 +82,10 @@ func (r *Record) String() string {
 	return str
 }
 
+func (r *Record) DebugHeader() {
+	fmt.Printf("_type: %#v\ndataSize: %#v\nflags: %#v\nid: %#v\nrevision: %#v\nversion: %#v\nunknown: %#v\ndata: %#v\n", r._type, r.dataSize, r.flags, r.id, r.revision, r.version, r.unknown, r.data)
+}
+
 func (r *Record) isMaster() bool {
 	return r.flags & 0x1 != 0
 }
