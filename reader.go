@@ -95,7 +95,7 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 		return ErrFormat
 	}
 	// make sure its the right form id (0)
-	if rootRecord.id != 0 {
+	if rootRecord.formid != 0 {
 		return ErrFormat
 	}
 
@@ -113,8 +113,9 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 		root.AllowGroup(allowedGroupType)
 	}
 
-	//root.AllowAllGroups()
-	//root.DisallowGroup("GRUP")
+	root.AllowAllGroups()
+	root.DisallowGroup("WRLD")
+	root.DisallowGroup("CELL")
 
 	err = root.readGroups(reader)
 	if err != nil {
@@ -122,6 +123,7 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 	}
 
 	DumpUnimplementedFields()
+	//DumpFormIds()
 
 	return nil
 

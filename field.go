@@ -88,6 +88,18 @@ func (f *Field) readData(reader io.ReaderAt) error {
 
 	f.data = data
 
+	if len(f.dataBuf) > 0 {
+		// if its a skip field, skip processing of it
+		if _, ok := f.data.(Skip); !ok {
+			if _, ok := f.data.(Unknown); !ok {
+				if err != nil && err != ErrUnimplementedField {
+					err = fmt.Errorf("Leftover data for field read on %s.%s\nCollected: %#v\nRemaining: %#v", f.RecordType(), f.Type(), f.data, f.dataBuf)
+					return err
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -98,9 +110,13 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 
 	zeroValue := FieldsStructLookup[recordTypeStr][fieldTypeStr]
 
-	// if its a skip field skip processing of it
+	// if its a skip field, skip processing of it
 	if _, ok := zeroValue.(Skip); ok{
 		return SkipZero, nil
+	}
+	// if its a manually marked as unknown field, skip processing of it
+	if _, ok := zeroValue.(Unknown); ok{
+		return UnknownZero, nil
 	}
 
 	t := reflect.TypeOf(zeroValue)

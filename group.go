@@ -114,6 +114,11 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 			return err
 		}
 
+		if record.Type() == "GRUP" {
+			return nil
+		}
+
+
 
 
 		// if zlib compressed, then swap reader out with uncompressed section

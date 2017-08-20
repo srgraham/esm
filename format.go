@@ -4,21 +4,30 @@ import (
 	"fmt"
 	//"reflect"
 	"reflect"
+	"sort"
 )
 
 var FieldsStructLookup map[string]map[string]interface{}
 
-var UnimplementedFields map[string]map[string]bool
+var UnimplementedFields map[string]map[string][]readBuf
+
+var FormIds map[formid]interface{}
 
 // make an interface that no other types will match
 type Skip bool
+type Unknown bool
 
 // no * here so that GoString() works right
 func (s Skip) GoString() string {
 	return "SKIP"
 }
+// no * here so that GoString() works right
+func (u Unknown) GoString() string {
+	return "UNKNOWN"
+}
 
 var SkipZero Skip
+var UnknownZero Unknown
 
 var boolZero bool
 var uint8Zero uint8
@@ -71,6 +80,7 @@ func MakeFieldStruct(label string) map[string]interface{} {
 	// also set base values
 
 	FieldsStructLookup[label]["EDID"] = zstringZero
+	FieldsStructLookup[label]["FULL"] = lstringZero
 
 	FieldsStructLookup[label]["KSIZ"] = uint32Zero
 
@@ -112,19 +122,41 @@ func MakeFieldStruct(label string) map[string]interface{} {
 func LogUnimplementedField(recordTypeStr string, fieldTypeStr string, dataBuf readBuf) {
 
 	if _, ok := UnimplementedFields[recordTypeStr]; !ok {
-		UnimplementedFields[recordTypeStr] = make(map[string]bool)
+		UnimplementedFields[recordTypeStr] = make(map[string][]readBuf)
 	}
-	UnimplementedFields[recordTypeStr][fieldTypeStr] = true
+	if _, ok := UnimplementedFields[recordTypeStr][fieldTypeStr]; !ok {
+		UnimplementedFields[recordTypeStr][fieldTypeStr] = make([]readBuf, 0)
+	}
+	UnimplementedFields[recordTypeStr][fieldTypeStr] = append(UnimplementedFields[recordTypeStr][fieldTypeStr], dataBuf)
 }
 
 func DumpUnimplementedFields() {
 	fmt.Println("---Unimplemented Fields---")
-	for recordType, recordFields := range UnimplementedFields {
+
+	keys := make([]string, 0)
+	for k, _ := range UnimplementedFields{
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+
+
+	for _, recordType := range keys {
+		recordFields := UnimplementedFields[recordType]
+
 		var fieldTypes []string
-		for fieldType, _ := range recordFields {
-			fieldTypes = append(fieldTypes, fieldType)
+		for fieldType, fieldBufs := range recordFields {
+			fieldInfo := fmt.Sprintf("%s(%d)", fieldType, len(fieldBufs))
+			fieldTypes = append(fieldTypes, fieldInfo)
 		}
 		fmt.Printf("%s: %s\n", recordType, fieldTypes)
+	}
+}
+
+func DumpFormIds() {
+	fmt.Println("---Form IDs---")
+	for formId, ref := range FormIds {
+		fmt.Printf("%08x: %s\n", formId, ref)
 	}
 }
 
@@ -137,8 +169,9 @@ func init() {
 
 
 
-	UnimplementedFields = make(map[string]map[string]bool)
+	UnimplementedFields = make(map[string]map[string][]readBuf)
 	FieldsStructLookup = make(map[string]map[string]interface{})
+	FormIds = make(map[formid]interface{})
 
 
 
@@ -154,7 +187,9 @@ func init() {
 	TES4["SNAM"] = zstringZero
 	TES4["MAST"] = zstringZero
 	TES4["DATA"] = uint64Zero
-	TES4["INTV"] = uint32Zero
+	TES4["INTV"] = UnknownZero
+	TES4["INCC"] = UnknownZero
+	TES4["TNAM"] = UnknownZero
 
 
 	/* AACT */
@@ -704,7 +739,7 @@ func init() {
 
 	/* WRLD */
 	WRLD := MakeFieldStruct("WRLD")
-	WRLD["RNAM"] = SkipZero
+	//WRLD["RNAM"] = SkipZero
 	_ = WRLD
 
 	/* WTHR */

@@ -16,7 +16,7 @@ type RecordHeader struct {
 	_type char4
 	dataSize uint32
 	flags uint32
-	id uint32
+	formid formid
 	revision uint32
 	version uint16
 	unknown uint16
@@ -50,10 +50,12 @@ func (r *Record) readHeader(sr io.SectionReader) error {
 
 	r.dataSize = b.uint32()
 	r.flags = b.uint32()
-	r.id = b.uint32()
+	r.formid = b.formid()
 	r.revision = b.uint32()
 	r.version = b.uint16()
 	r.unknown = b.uint16()
+
+	FormIds[r.formid] = r
 
 	fmt.Println(r)
 
@@ -83,7 +85,7 @@ func (r *Record) String() string {
 }
 
 func (r *Record) DebugHeader() {
-	fmt.Printf("_type: %#v\ndataSize: %#v\nflags: %#v\nid: %#v\nrevision: %#v\nversion: %#v\nunknown: %#v\ndata: %#v\n", r._type, r.dataSize, r.flags, r.id, r.revision, r.version, r.unknown, r.data)
+	fmt.Printf("_type: %#v\ndataSize: %#v\nflags: %#v\nformid: %#v\nrevision: %#v\nversion: %#v\nunknown: %#v\ndata: %#v\n", r._type, r.dataSize, r.flags, r.formid, r.revision, r.version, r.unknown, r.data)
 }
 
 func (r *Record) isMaster() bool {

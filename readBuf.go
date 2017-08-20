@@ -141,7 +141,7 @@ func(b *readBuf) zstring() zstring {
 		i += 1
 	}
 	x := zstring((*b)[0:i])
-	*b = (*b)[i:]
+	*b = (*b)[i+1:]
 	return x
 }
 
