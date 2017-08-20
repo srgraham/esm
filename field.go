@@ -98,6 +98,11 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 
 	zeroValue := FieldsStructLookup[recordTypeStr][fieldTypeStr]
 
+	// if its a skip field skip processing of it
+	if _, ok := zeroValue.(Skip); ok{
+		return SkipZero, nil
+	}
+
 	t := reflect.TypeOf(zeroValue)
 
 	if t == nil {

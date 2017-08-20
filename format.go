@@ -10,6 +10,16 @@ var FieldsStructLookup map[string]map[string]interface{}
 
 var UnimplementedFields map[string]map[string]bool
 
+// make an interface that no other types will match
+type Skip bool
+
+// no * here so that GoString() works right
+func (s Skip) GoString() string {
+	return "SKIP"
+}
+
+var SkipZero Skip
+
 var boolZero bool
 var uint8Zero uint8
 var uint16Zero uint16
@@ -694,6 +704,7 @@ func init() {
 
 	/* WRLD */
 	WRLD := MakeFieldStruct("WRLD")
+	WRLD["RNAM"] = SkipZero
 	_ = WRLD
 
 	/* WTHR */
