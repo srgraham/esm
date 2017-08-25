@@ -28,6 +28,7 @@ type Group struct {
 	sr         *io.SectionReader
 	off        int64
 	records []*Record
+	subGroups []*Group
 }
 
 
@@ -78,7 +79,14 @@ func (g *Group) Type() (string){
 }
 
 func (g *Group) String() string {
-	str := fmt.Sprintf("Group[%s](%d): ", g.Type(), g.groupSize)
+	var outType string
+	switch(g.groupType){
+	case 0:
+		outType = fmt.Sprintf("%s", g.Type())
+	default:
+		outType = fmt.Sprintf("%d.%d", g.groupType, g.label)
+	}
+	str := fmt.Sprintf("Group[%s](%d): ", outType, g.groupSize)
 	for _, record := range g.records {
 		str += fmt.Sprintf("%s", record.Type()) + ", "
 	}
@@ -93,11 +101,30 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 
 	var off int64 = g.off + groupHeaderLen
 
+	currentReader := reader
+	g.subGroups = make([]*Group, 0)
+
 	for off < g.off + g.Size() {
 		headerReader := io.NewSectionReader(reader, off, recordHeaderLen)
 
 		record := &Record{parentGroup: g, off: off}
 		err := record.readHeader(*headerReader)
+
+		currentReader = reader
+
+		if err == ErrRecordIsGRUP {
+
+			var nextGroup *Group
+			var err error
+			nextGroup, off, err = g.Root().readNextGroup(currentReader, off)
+
+			if err != nil {
+				return err
+			}
+
+			g.subGroups = append(g.subGroups, nextGroup)
+			continue
+		}
 
 		off += recordHeaderLen
 
@@ -113,13 +140,6 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 		if err != nil {
 			return err
 		}
-
-		if record.Type() == "GRUP" {
-			return nil
-		}
-
-
-
 
 		// if zlib compressed, then swap reader out with uncompressed section
 		// FIXME: this looks like ass but idk how to do it correctly
@@ -161,14 +181,11 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 			// record.readFields() skips over the record header bytes, so set it to negative that
 			record.off = -1 * recordHeaderLen
 
-			err = record.readFields(readerDecomp)
+			currentReader = readerDecomp
 
-		} else {
-			err = record.readFields(reader)
 		}
 
-
-		//err = record.readFields(reader)
+		err = record.readFields(currentReader)
 
 		if err != nil {
 			return err

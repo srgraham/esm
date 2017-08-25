@@ -48,6 +48,10 @@ func (r *Record) readHeader(sr io.SectionReader) error {
 
 	r._type = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
 
+	if r.Type() == "GRUP" {
+		return ErrRecordIsGRUP
+	}
+
 	r.dataSize = b.uint32()
 	r.flags = b.uint32()
 	r.formid = b.formid()

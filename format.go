@@ -739,7 +739,8 @@ func init() {
 
 	/* WRLD */
 	WRLD := MakeFieldStruct("WRLD")
-	//WRLD["RNAM"] = SkipZero
+	WRLD["ICON"] = zstringZero
+	WRLD["XWEM"] = zstringZero
 	_ = WRLD
 
 	/* WTHR */

@@ -15,6 +15,7 @@ var (
 	ErrNilType = errors.New("cannot decode nil type")
 	ErrDecodeUnknownType = errors.New("cannot decode %s type")
 	ErrUnimplementedField = errors.New("Unimplemented field")
+	ErrRecordIsGRUP = errors.New("Record is being read as a GRUP")
 )
 
 type Reader struct {
@@ -113,9 +114,9 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 		root.AllowGroup(allowedGroupType)
 	}
 
-	root.AllowAllGroups()
-	root.DisallowGroup("WRLD")
-	root.DisallowGroup("CELL")
+	//root.AllowAllGroups()
+	//root.DisallowGroup("WRLD")
+	//root.DisallowGroup("CELL")
 
 	err = root.readGroups(reader)
 	if err != nil {

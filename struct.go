@@ -10,7 +10,7 @@ const (
 
 
 	fileHeaderSignature      = 0x54455334 // TES4
-	groupHeaderSignature      = 0x54455334 // GRUP
+	groupHeaderSignature      = 0x47525550 // GRUP
 
 	directoryHeaderSignature = 0x02014b50
 	directoryEndSignature    = 0x06054b50

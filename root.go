@@ -71,40 +71,69 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 	var off int64 = root.off + root.rootRecord.Size()
 
 	for off < root.off + root.Size() {
-		headerReader := io.NewSectionReader(reader, off, groupHeaderLen)
-
-		group := &Group{parentRoot: root, off: off}
-		err := group.readHeader(*headerReader)
-
-		off += groupHeaderLen
-
-		sr := io.NewSectionReader(reader, off, group.Size() - groupHeaderLen)
-		group.sr = sr
-
-		off += group.Size() - groupHeaderLen
+		var group *Group
+		var err error
+		group, off, err = root.readNextGroup(reader, off)
 
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
 			break
-		}
-		if err != nil {
-			return err
-		}
-
-		if isAllowedGroupType, ok := root.allowedGroupTypes[group.Type()]; ok && isAllowedGroupType {
-			err = group.readRecords(reader)
-			if err != nil {
-				return err
-			}
-		} else {
-			fmt.Printf("Skipping GROUP read for '%s'\n", group.Type())
-			if _, ok := FieldsStructLookup[group.Type()]; !ok {
-				return fmt.Errorf("Missing definition for GROUP record type %s", group.Type())
-				//fmt.Printf("Missing definition for GROUP record type %s\n\n", group.Type())
-			}
 		}
 
 		root.groups = append(root.groups, group)
 	}
 
 	return nil
+}
+
+
+func (root *Root) readNextGroup(reader io.ReaderAt, off int64) (*Group, int64, error) {
+	headerReader := io.NewSectionReader(reader, off, groupHeaderLen)
+
+	group := &Group{parentRoot: root, off: off}
+	err := group.readHeader(*headerReader)
+
+	off += groupHeaderLen
+
+	sr := io.NewSectionReader(reader, off, group.Size() - groupHeaderLen)
+	group.sr = sr
+
+	off += group.Size() - groupHeaderLen
+
+	if err != nil {
+		return nil, off, err
+	}
+
+	switch group.groupType {
+	case 0: // top
+		if isAllowedGroupType, ok := root.allowedGroupTypes[group.Type()]; ok && isAllowedGroupType {
+			err = group.readRecords(reader)
+			if err != nil {
+				return nil, off, err
+			}
+		} else {
+			fmt.Printf("Skipping GROUP read for %d'%s'\n", group.groupType, group.Type())
+			if _, ok := FieldsStructLookup[group.Type()]; !ok {
+				return nil, off, fmt.Errorf("Missing definition for GROUP record type %s", group.Type())
+				//fmt.Printf("Missing definition for GROUP record type %s\n\n", group.Type())
+			}
+		}
+		return group, off, nil
+
+	//case 1: // world children
+	//case 2: // interior cell block
+	//case 3: // interior cell subblock
+	//case 4: // exterior cell block
+	//case 5: // exterior cell subblock
+	//case 6: // cell children
+	//case 7: // topic children
+	//case 8: // cell persistent children
+	//case 9: // cell temporary children
+	//case 10: // cell visible distant children
+	default:
+		err = group.readRecords(reader)
+		if err != nil {
+			return nil, off, err
+		}
+	}
+	return group, off, nil
 }
