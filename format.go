@@ -64,13 +64,26 @@ var wstringZero wstring
 var wzstringZero wzstring
 var zstringZero zstring
 
-type OBNDZero struct {
+type OBND struct {
 	X1 int16
 	Y1 int16
 	Z1 int16
 	X2 int16
 	Y2 int16
 	Z2 int16
+}
+
+type PosRot struct{
+	Position struct {
+		X float32
+		Y float32
+		Z float32
+	}
+	Rotation struct {
+		X float32
+		Y float32
+		Z float32
+	}
 }
 
 
@@ -107,7 +120,7 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 	FieldsStructLookup[label]["MODL"] = zstringZero
 
-	FieldsStructLookup[label]["OBND"] = OBNDZero{}
+	FieldsStructLookup[label]["OBND"] = OBND{}
 
 
 
@@ -151,6 +164,16 @@ func DumpUnimplementedFields() {
 		}
 		fmt.Printf("%s: %s\n", recordType, fieldTypes)
 	}
+}
+
+func dumpAndCrash(b readBuf, record Record) reflect.Type {
+	fmt.Printf(
+		"### Dump and crash :D ###\nBuffer(%d): %s\n\n%s\n\n",
+		b.Size(),
+		b.Human(),
+		record.String(),
+	)
+	panic(":D")
 }
 
 func DumpFormIds() {
@@ -627,6 +650,57 @@ func init() {
 
 	/* REFR */
 	REFR := MakeFieldStruct("REFR")
+	REFR["NAME"] = formidZero
+	REFR["XPRM"] = struct {
+		X float32
+		Y float32
+		Z float32
+		Unknown float32
+		Unknown2 uint32
+	}{}
+	REFR["XLRM"] = formidZero
+
+	type structXWCU struct {
+		X float32
+		Y float32
+		Z float32
+		Unknown float32
+	}
+
+	REFR["XWCU"] = struct {
+		LinearVelocity structXWCU
+		AngularVelocity structXWCU
+		Empty structXWCU
+	}{}
+
+	REFR["DATA"] = PosRot{}
+
+	REFR["XLIG"] = SkipZero
+	REFR["XLYR"] = formidZero // GECK layer info (house floor grouping) :D
+	REFR["XTEL"] = struct {
+		Door formid
+		PosRot
+		Flags uint32
+	}{}
+
+	REFR["XNDP"] = struct {
+		NavMesh formid
+		TeleportMarkerTriangle int16
+		Unused [2]byte
+	}{}
+
+	REFR["XSCL"] = float32Zero
+
+	//REFR["XLOC"] = struct {
+	//	Level byte
+	//	Flags1 [3]byte
+	//	KEYM formid
+	//	Flags2 byte
+	//	Flags3 [3]byte
+	//	Flags4 [8]byte
+	//
+	//}{}
+	//REFR["XLOC"] = dumpAndCrash
 	_ = REFR
 
 	/* REGN */

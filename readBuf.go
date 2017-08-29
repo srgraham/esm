@@ -145,10 +145,20 @@ func(b *readBuf) zstring() zstring {
 	return x
 }
 
+func (b *readBuf) byteLength(length int64) []uint8 {
+	x := (*b)[0:length]
+	*b = (*b)[length:]
+	return x
+}
+
 func (b *readBuf) Human() string {
 	r := regexp.MustCompile("[^a-zA-Z0-9_ ,/?\\\\+=()\\][&^%$#@!~'\":<>-]")
 	out := r.ReplaceAll([]byte(*b), []byte("."))
 	return string(out)
+}
+
+func (b *readBuf) Size() int {
+	return len(*b)
 }
 
 
@@ -177,6 +187,11 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value, f *Field) (error) {
 		for i := 0; i < fieldCount; i+=1 {
 			structFieldType := t.Field(i)
 			structFieldValue := v.Field(i)
+
+			if ! structFieldValue.CanSet() {
+				msg := fmt.Sprintf("unexportable field '%s' in a struct definition:\n%#v.\nCapitalize those struct keys, man", structFieldType.Name, v)
+				panic(msg)
+			}
 			b.readType(structFieldType.Type, structFieldValue, f)
 		}
 	default:
@@ -231,6 +246,43 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value, f *Field) (error) {
 			rv = reflect.ValueOf(b.lstring(f.Root()))
 		case formid:
 			rv = reflect.ValueOf(b.formid())
+
+		// quick dump types
+		case [2]byte:
+			val := new([2]byte)
+			stuff := b.byteLength(2)
+			copy(val[:], stuff[0:2])
+			rv = reflect.ValueOf(val)
+		case [3]byte:
+			val := new([3]byte)
+			stuff := b.byteLength(3)
+			copy(val[:], stuff[0:3])
+			rv = reflect.ValueOf(val)
+		case [4]byte:
+			val := new([4]byte)
+			stuff := b.byteLength(4)
+			copy(val[:], stuff[0:4])
+			rv = reflect.ValueOf(val)
+		case [5]byte:
+			val := new([5]byte)
+			stuff := b.byteLength(5)
+			copy(val[:], stuff[0:5])
+			rv = reflect.ValueOf(val)
+		case [6]byte:
+			val := new([6]byte)
+			stuff := b.byteLength(6)
+			copy(val[:], stuff[0:6])
+			rv = reflect.ValueOf(val)
+		case [7]byte:
+			val := new([7]byte)
+			stuff := b.byteLength(7)
+			copy(val[:], stuff[0:7])
+			rv = reflect.ValueOf(val)
+		case [8]byte:
+			val := new([8]byte)
+			stuff := b.byteLength(8)
+			copy(val[:], stuff[0:8])
+			rv = reflect.ValueOf(val)
 
 		//case func(readBuf, Field) interface{}:
 		//	fn := v //reflect.ValueOf(v)

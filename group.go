@@ -83,6 +83,26 @@ func (g *Group) String() string {
 	switch(g.groupType){
 	case 0:
 		outType = fmt.Sprintf("%s", g.Type())
+	case 1:
+		outType = fmt.Sprintf("WORLD_0x%x", g.label)
+	case 2:
+		outType = fmt.Sprintf("INSIDE_0x%x", g.label)
+	case 3:
+		outType = fmt.Sprintf("INSIDE_SUB_0x%x", g.label)
+	case 4:
+		outType = fmt.Sprintf("OUTSIDE_0x%x", g.label)
+	case 5:
+		outType = fmt.Sprintf("OUTSIDE_SUB_0x%x", g.label)
+	case 6:
+		outType = fmt.Sprintf("CELL_CHILD_0x%x", g.label)
+	case 7:
+		outType = fmt.Sprintf("TOPIC_CHILD_0x%x", g.label)
+	case 8:
+		outType = fmt.Sprintf("CELL_PERSIST_CHILD_0x%x", g.label)
+	case 9:
+		outType = fmt.Sprintf("CELL_TEMP_CHILD_0x%x", g.label)
+	case 10:
+		outType = fmt.Sprintf("CELL_VISIBLE_DIST_CHILD_0x%x", g.label)
 	default:
 		outType = fmt.Sprintf("%d.%d", g.groupType, g.label)
 	}

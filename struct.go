@@ -76,6 +76,10 @@ func (z zstring) String() string {
 	return string(z)
 }
 
+//func (z formid) GoString() string {
+//	return fmt.Sprintf("0x%x08", z)
+//}
+
 
 
 
