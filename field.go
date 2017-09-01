@@ -84,7 +84,7 @@ func (f *Field) readData(reader io.ReaderAt) error {
 	if err != nil && err != ErrUnimplementedField {
 		return err
 	}
-	fmt.Printf("%s.%s: %#v\n", f.RecordType(), f.Type(), data)
+	//fmt.Printf("%s.%s: %#v\n", f.RecordType(), f.Type(), data)
 
 	f.data = data
 

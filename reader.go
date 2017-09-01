@@ -33,36 +33,44 @@ type ReadCloser struct {
 
 
 // OpenReader will open the esm/esp file specified by name and return a ReadCloser.
-func OpenReader(name string, allowedGroups []string) (*ReadCloser, error) {
+func OpenReader(name string, allowedGroups []string) (*ReadCloser, *Root, error) {
 	f, err := os.Open(name)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	fi, err := f.Stat()
 	if err != nil {
 		f.Close()
-		return nil, err
+		return nil, nil, err
 	}
 	r := new(ReadCloser)
-	if err := r.init(f, fi.Size(), allowedGroups); err != nil {
+
+	var root *Root
+	var err2 error
+
+	if root, err2 = r.init(f, fi.Size(), allowedGroups); err2 != nil {
 		f.Close()
-		return nil, err
+		return nil, root, err2
 	}
 	r.f = f
-	return r, nil
+	return r, root, nil
 }
 
 // NewReader returns a new Reader reading from r, which is assumed to
 // have the given size in bytes.
-func NewReader(readerAt io.ReaderAt, size int64, allowedGroups []string) (*Reader, error) {
+func NewReader(readerAt io.ReaderAt, size int64, allowedGroups []string) (*Reader, *Root, error) {
+	var root *Root
+	var err error
+
 	reader := new(Reader)
-	if err := reader.init(readerAt, size, allowedGroups); err != nil {
-		return nil, err
+
+	if root, err = reader.init(readerAt, size, allowedGroups); err != nil {
+		return nil, root, err
 	}
-	return reader, nil
+	return reader, root, nil
 }
 
-func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) error {
+func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) (*Root, error) {
 	if size == 0 {
 		size = 1<<63-1
 	}
@@ -88,30 +96,34 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 	err := rootRecord.readHeader(*sr)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// check its a TES4 parentRecord
 	if binary.BigEndian.Uint32([]byte(rootRecord._type[:])) != fileHeaderSignature {
-		return ErrFormat
+		return nil, ErrFormat
 	}
 	// make sure its the right form id (0)
 	if rootRecord.formid != 0 {
-		return ErrFormat
+		return nil, ErrFormat
 	}
 
 	// read the fields of the parentRoot parentRecord
 	err = rootRecord.readFields(reader)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// we have the TES4 data. now lets grab the groups
 	root := &Root{rootRecord : rootRecord, readerAt: reader, readerSize: size, off: off}
 
-	for _, allowedGroupType := range allowedGroups {
-		root.AllowGroup(allowedGroupType)
+	if allowedGroups != nil {
+		for _, allowedGroupType := range allowedGroups {
+			root.AllowGroup(allowedGroupType)
+		}
+	} else {
+		root.AllowAllGroups()
 	}
 
 	//root.AllowAllGroups()
@@ -120,13 +132,13 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) er
 
 	err = root.readGroups(reader)
 	if err != nil {
-		return err
+		return root, err
 	}
 
-	DumpUnimplementedFields()
+	//DumpUnimplementedFields()
 	//DumpFormIds()
 
-	return nil
+	return root, nil
 
 }
 

@@ -137,3 +137,26 @@ func (root *Root) readNextGroup(reader io.ReaderAt, off int64) (*Group, int64, e
 	}
 	return group, off, nil
 }
+
+func (root *Root) GetRecords() []*Record {
+	records := make([]*Record, 0)
+
+	for _, group := range root.groups {
+		groupRecords := group.GetRecords()
+		records = append(records, groupRecords...)
+	}
+
+	return records
+}
+
+func (root *Root) GetRecordsOfType(_type string) []*Record {
+	allRecords := root.GetRecords()
+	records := make([]*Record, 0)
+	for _, record := range allRecords {
+		if record.Type() == _type {
+			records = append(records, record)
+		}
+	}
+	return records
+}
+

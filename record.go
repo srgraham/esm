@@ -61,7 +61,7 @@ func (r *Record) readHeader(sr io.SectionReader) error {
 
 	FormIds[r.formid] = r
 
-	fmt.Println(r)
+	//fmt.Println(r)
 
 	return nil
 }

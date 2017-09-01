@@ -61,7 +61,7 @@ func (g *Group) readHeader(sr io.SectionReader) error {
 	g.version = b.uint16()
 	g.unknown2 = b.uint16()
 
-	fmt.Println(g)
+	//fmt.Println(g)
 
 	return nil
 }
@@ -222,7 +222,18 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 
 }
 
+func (g *Group) GetRecords() []*Record {
+	records := make([]*Record, 0)
 
+	for _, subGroup := range g.subGroups {
+		groupRecords := subGroup.GetRecords()
+		records = append(records, groupRecords...)
+	}
+
+	records = append(records, g.records...)
+
+	return records
+}
 
 
 

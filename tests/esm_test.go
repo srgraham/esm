@@ -146,12 +146,21 @@ func TestXxx(t *testing.T) {
 		//"ZOOM",
 	}
 
-	r, err := esm.OpenReader("C:/Program Files (x86)/Steam/steamapps/common/Fallout 4/Data/Fallout4.esm", allowedGroupTypes)
+	allowedGroupTypes = nil
+
+	r, root, err := esm.OpenReader("C:/Program Files (x86)/Steam/steamapps/common/Fallout 4/Data/Fallout4.esm", allowedGroupTypes)
+	defer r.Close()
 
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer r.Close()
+
+	esm.DumpUnimplementedFields()
+
+	stats := root.GetRecordsOfType("STAT")
+	fmt.Print(stats)
+
+
 
 
 
