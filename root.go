@@ -160,3 +160,17 @@ func (root *Root) GetRecordsOfType(_type string) []*Record {
 	return records
 }
 
+
+func (root *Root) GetRecordByFormId(id formid) *Record {
+	if record, ok := FormIds[id].(*Record); ok {
+		return record
+	}
+	return nil
+}
+
+
+func (root *Root) GetRecordByEdid(edid string) *Record {
+	id := EdidIds[edid]
+	return root.GetRecordByFormId(id)
+}
+

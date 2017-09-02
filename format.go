@@ -12,6 +12,7 @@ var FieldsStructLookup map[string]map[string]interface{}
 var UnimplementedFields map[string]map[string][]readBuf
 
 var FormIds map[formid]interface{}
+var EdidIds map[string]formid
 
 // make an interface that no other types will match
 type Skip bool
@@ -92,7 +93,15 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 	// also set base values
 
-	FieldsStructLookup[label]["EDID"] = zstringZero
+	FieldsStructLookup[label]["EDID"] = func (b readBuf, record Record) interface{} {
+		edid := b.zstring()
+		edidStr := string(edid)
+		EdidIds[edidStr] = record.formid
+		return edid
+	}
+
+
+
 	FieldsStructLookup[label]["FULL"] = lstringZero
 
 	FieldsStructLookup[label]["KSIZ"] = uint32Zero
@@ -119,8 +128,11 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 
 	FieldsStructLookup[label]["MODL"] = zstringZero
+	FieldsStructLookup[label]["MODS"] = SkipZero
+	FieldsStructLookup[label]["MODT"] = SkipZero
 
 	FieldsStructLookup[label]["OBND"] = OBND{}
+
 
 
 
@@ -182,6 +194,12 @@ func DumpFormIds() {
 		fmt.Printf("%08x: %s\n", formId, ref)
 	}
 }
+func DumpEdidIds() {
+	fmt.Println("---EDID IDs---")
+	for edid, id := range EdidIds {
+		fmt.Printf("%s: %s\n", edid, FormIds[id])
+	}
+}
 
 
 func init() {
@@ -195,6 +213,7 @@ func init() {
 	UnimplementedFields = make(map[string]map[string][]readBuf)
 	FieldsStructLookup = make(map[string]map[string]interface{})
 	FormIds = make(map[formid]interface{})
+	EdidIds = make(map[string]formid)
 
 
 
@@ -218,6 +237,10 @@ func init() {
 	/* AACT */
 	AACT := MakeFieldStruct("AACT")
 	_ = AACT
+
+	/* ACHR */
+	ACHR := MakeFieldStruct("ACHR")
+	_ = ACHR
 
 	/* ACTI */
 	ACTI := MakeFieldStruct("ACTI")
@@ -777,6 +800,27 @@ func init() {
 
 	/* STAT */
 	STAT := MakeFieldStruct("STAT")
+	STAT["DNAM"] = SkipZero
+	//STAT["PRPS"] = dumpAndCrash
+	STAT["MNAM"] = func(b readBuf, record Record) interface{} {
+
+		lod_1 := b.slice(260)
+		lod_2 := b.slice(260)
+		lod_3 := b.slice(260)
+		lod_4 := b.slice(260)
+
+		return struct {
+			LOD_1 zstring
+			LOD_2 zstring
+			LOD_3 zstring
+			LOD_4 zstring
+		}{
+			lod_1.zstring(),
+			lod_2.zstring(),
+			lod_3.zstring(),
+			lod_4.zstring(),
+		}
+	}
 	_ = STAT
 
 	/* TACT */

@@ -9,8 +9,9 @@ const (
 	fieldHeaderLen = 6
 
 
-	fileHeaderSignature      = 0x54455334 // TES4
+	fileHeaderSignature       = 0x54455334 // TES4
 	groupHeaderSignature      = 0x47525550 // GRUP
+	edidSignature             = "EDID" // 0x45444944 // EDID
 
 	directoryHeaderSignature = 0x02014b50
 	directoryEndSignature    = 0x06054b50

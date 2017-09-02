@@ -58,7 +58,7 @@ func (f *Field) readHeader(sr io.SectionReader) error {
 
 func (f *Field) String() string {
 	//str := fmt.Sprintf("Field[%s](%d): buff: %s", f._type, f.dataSize, f.dataBuf)
-	str := fmt.Sprintf("Field[%s](%d): data: %s", f.Type(), f.dataSize, f.data)
+	str := fmt.Sprintf("Field[%s](%d): data: %#v", f.Type(), f.dataSize, f.data)
 	return str
 }
 

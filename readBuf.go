@@ -151,6 +151,12 @@ func (b *readBuf) byteLength(length int64) []uint8 {
 	return x
 }
 
+func (b *readBuf) slice(length int64) readBuf {
+	x := readBuf((*b)[0:length])
+	*b = (*b)[length:]
+	return x
+}
+
 func (b *readBuf) Human() string {
 	r := regexp.MustCompile("[^a-zA-Z0-9_ ,/?\\\\+=()\\][&^%$#@!~'\":<>-]")
 	out := r.ReplaceAll([]byte(*b), []byte("."))

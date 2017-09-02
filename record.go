@@ -88,6 +88,14 @@ func (r *Record) String() string {
 	return str
 }
 
+func (r *Record) Dump() string {
+	str := r.String()
+	for _, field := range r.fields {
+		str += "\n" + field.String()
+	}
+	return str + "\n"
+}
+
 func (r *Record) DebugHeader() {
 	fmt.Printf("_type: %#v\ndataSize: %#v\nflags: %#v\nformid: %#v\nrevision: %#v\nversion: %#v\nunknown: %#v\ndata: %#v\n", r._type, r.dataSize, r.flags, r.formid, r.revision, r.version, r.unknown, r.data)
 }
@@ -156,7 +164,6 @@ func (r *Record) readFields(reader io.ReaderAt) error {
 		if err != nil {
 			return err
 		}
-
 
 		off += int64(field.dataSize)
 

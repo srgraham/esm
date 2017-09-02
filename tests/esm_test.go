@@ -157,13 +157,20 @@ func TestXxx(t *testing.T) {
 
 	esm.DumpUnimplementedFields()
 
+	//IndustrialMachine48 := root.GetRecordByEdid("DiamondBulkheadWall12")
+	IndustrialMachine48 := root.GetRecordByFormId(0x249c04)
+	//IndustrialMachine48 := root.GetRecordByEdid("IndustrialMachine48")
+
+	if IndustrialMachine48 == nil {
+		esm.DumpEdidIds()
+		panic("nil yo")
+	}
+
+	fmt.Printf(IndustrialMachine48.Dump())
+
 	stats := root.GetRecordsOfType("STAT")
-	fmt.Print(stats)
-
-
-
-
-
+	fmt.Printf("%d records\n", len(stats))
+	fmt.Println(stats[0].Dump())
 
 }
 
