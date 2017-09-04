@@ -135,10 +135,10 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 		if err == ErrRecordIsGRUP {
 
 			var nextGroup *Group
-			var err error
-			nextGroup, off, err = g.Root().readNextGroup(currentReader, off)
+			var err2 error
+			nextGroup, off, err2 = g.Root().readNextGroup(currentReader, off)
 
-			if err != nil {
+			if err2 != nil {
 				return err
 			}
 

@@ -65,17 +65,9 @@ func (f *Field) String() string {
 func (f *Field) readData(reader io.ReaderAt) error {
 
 	sr := io.NewSectionReader(reader, f.off + fieldHeaderLen, f.Size() - fieldHeaderLen)
-	_ = sr
 
-	//rs := io.NewSectionReader(reader, f.off + fieldHeaderLen, int64(f.dataSize))
-	//if _, err := f.sr.Seek(0, io.SeekStart); err != nil {
-	//	return err
-	//}
-
-	//buf := bufio.NewReader(rs)
-
-
-	if _, err := io.ReadFull(sr, f.dataBuf); err != nil {
+	if n, err := io.ReadFull(sr, f.dataBuf); err != nil {
+		_ = n
 		return err
 	}
 

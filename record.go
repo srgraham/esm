@@ -61,6 +61,10 @@ func (r *Record) readHeader(sr io.SectionReader) error {
 
 	FormIds[r.formid] = r
 
+	if r.formid == 0xa06e6 {
+		fmt.Print(0)
+	}
+
 	//fmt.Println(r)
 
 	return nil

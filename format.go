@@ -108,7 +108,8 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 	FieldsStructLookup[label]["KWDA"] = func (b readBuf, record Record) interface{} {
 
-		fieldKSIZ := record.fieldsByType("KSIZ")[0]
+		fieldsKSIZ := record.fieldsByType("KSIZ")
+		fieldKSIZ := fieldsKSIZ[len(fieldsKSIZ) - 1]
 
 		var count uint32
 		var ok bool

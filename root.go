@@ -79,6 +79,10 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 			break
 		}
 
+		if group == nil {
+			fmt.Printf("yo")
+		}
+
 		root.groups = append(root.groups, group)
 	}
 
@@ -100,7 +104,7 @@ func (root *Root) readNextGroup(reader io.ReaderAt, off int64) (*Group, int64, e
 	off += group.Size() - groupHeaderLen
 
 	if err != nil {
-		return nil, off, err
+		return group, off, err
 	}
 
 	switch group.groupType {
@@ -108,12 +112,12 @@ func (root *Root) readNextGroup(reader io.ReaderAt, off int64) (*Group, int64, e
 		if isAllowedGroupType, ok := root.allowedGroupTypes[group.Type()]; ok && isAllowedGroupType {
 			err = group.readRecords(reader)
 			if err != nil {
-				return nil, off, err
+				return group, off, err
 			}
 		} else {
 			fmt.Printf("Skipping GROUP read for %d'%s'\n", group.groupType, group.Type())
 			if _, ok := FieldsStructLookup[group.Type()]; !ok {
-				return nil, off, fmt.Errorf("Missing definition for GROUP record type %s", group.Type())
+				return group, off, fmt.Errorf("Missing definition for GROUP record type %s", group.Type())
 				//fmt.Printf("Missing definition for GROUP record type %s\n\n", group.Type())
 			}
 		}
@@ -132,7 +136,7 @@ func (root *Root) readNextGroup(reader io.ReaderAt, off int64) (*Group, int64, e
 	default:
 		err = group.readRecords(reader)
 		if err != nil {
-			return nil, off, err
+			return group, off, err
 		}
 	}
 	return group, off, nil
