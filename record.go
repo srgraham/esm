@@ -131,6 +131,8 @@ func (r *Record) Root() *Root {
 
 func (r *Record) readFields(reader io.ReaderAt) error {
 
+	fmt.Println(r.String())
+
 	//rs := io.NewSectionReader(r.readerAt, recordHeaderLen, int64(r.dataSize) + int64(recordHeaderLen))
 	//if _, err := rs.Seek(0, io.SeekStart); err != nil {
 	//	return err

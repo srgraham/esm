@@ -134,7 +134,11 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 	FieldsStructLookup[label]["OBND"] = OBND{}
 
-
+	FieldsStructLookup[label]["XXXX"] = func (b readBuf, record Record) interface{} {
+		nextFieldSize := b.uint32()
+		fmt.Printf("Hit XXXX. Next field is biggie; uses %d bytes\n", nextFieldSize)
+		return nextFieldSize
+	}
 
 
 
@@ -615,6 +619,10 @@ func init() {
 	/* NAVI */
 	NAVI := MakeFieldStruct("NAVI")
 	_ = NAVI
+
+	/* NAVM */
+	NAVM := MakeFieldStruct("NAVM")
+	_ = NAVM
 
 	/* NOCM */
 	NOCM := MakeFieldStruct("NOCM")

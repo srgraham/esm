@@ -9,7 +9,7 @@ import (
 
 type FieldHeader struct {
 	_type char4
-	dataSize uint16
+	dataSize uint32
 }
 
 
@@ -33,6 +33,24 @@ func (f *Field) Root() *Root {
 	return f.parentRecord.Root()
 }
 
+func (f *Field) PrevField() *Field {
+	fieldCount := len(f.parentRecord.fields)
+
+	if fieldCount == 0 {
+		return nil
+	}
+
+	prevField := f.parentRecord.fields[fieldCount - 1]
+
+	if f == prevField {
+		if fieldCount == 1 {
+			return nil
+		}
+		return f.parentRecord.fields[fieldCount - 2]
+	}
+	return prevField
+}
+
 
 func (f *Field) readHeader(sr io.SectionReader) error {
 	buf := make([]byte, fieldHeaderLen)
@@ -47,7 +65,15 @@ func (f *Field) readHeader(sr io.SectionReader) error {
 
 	f._type = char4{byte(b.char()), byte(b.char()), byte(b.char()), byte(b.char())}
 
-	f.dataSize = b.uint16()
+	f.dataSize = uint32(b.uint16())
+
+	// if size is 0, check if prev field was XXXX
+	if f.dataSize == 0 {
+		prevField := f.PrevField()
+		if prevField != nil && prevField.Type() == "XXXX" {
+			f.dataSize = prevField.data.(uint32)
+		}
+	}
 
 	f.dataBuf = make([]byte, f.dataSize)
 
@@ -67,8 +93,8 @@ func (f *Field) readData(reader io.ReaderAt) error {
 	sr := io.NewSectionReader(reader, f.off + fieldHeaderLen, f.Size() - fieldHeaderLen)
 
 	if n, err := io.ReadFull(sr, f.dataBuf); err != nil {
-		_ = n
-		return err
+		err2 := fmt.Errorf("Unexpected EOF on f.readData() (%s). Read %d bytes, expected %d bytes.", f.Type(), n, len(f.dataBuf))
+		return err2
 	}
 
 	// if type is HEDR, read struct
