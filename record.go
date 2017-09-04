@@ -62,7 +62,7 @@ func (r *Record) readHeader(sr io.SectionReader) error {
 	FormIds[r.formid] = r
 
 	if r.formid == 0xa06e6 {
-		fmt.Print(0)
+		fmt.Print(999999)
 	}
 
 	//fmt.Println(r)
@@ -131,7 +131,7 @@ func (r *Record) Root() *Root {
 
 func (r *Record) readFields(reader io.ReaderAt) error {
 
-	fmt.Println(r.String())
+	//fmt.Println(r.String())
 
 	//rs := io.NewSectionReader(r.readerAt, recordHeaderLen, int64(r.dataSize) + int64(recordHeaderLen))
 	//if _, err := rs.Seek(0, io.SeekStart); err != nil {

@@ -124,6 +124,11 @@ func (z *Reader) init(reader io.ReaderAt, size int64, allowedGroups []string) (*
 		}
 	} else {
 		root.AllowAllGroups()
+		root.DisallowGroup("NAVM")
+		root.DisallowGroup("WRLD")
+		root.DisallowGroup("QUST")
+		root.DisallowGroup("PACK")
+		root.DisallowGroup("CELL")
 	}
 
 	//root.AllowAllGroups()

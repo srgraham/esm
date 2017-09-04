@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"fmt"
+	"time"
 )
 
 type Root struct {
@@ -71,6 +72,9 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 	var off int64 = root.off + root.rootRecord.Size()
 
 	for off < root.off + root.Size() {
+
+		start := time.Now()
+
 		var group *Group
 		var err error
 		group, off, err = root.readNextGroup(reader, off)
@@ -82,6 +86,10 @@ func (root *Root) readGroups(reader io.ReaderAt) error {
 		if group == nil {
 			fmt.Printf("yo")
 		}
+
+		elapsed := time.Since(start).Seconds()
+
+		fmt.Printf("Group %s took %.2fs\n", group.label, elapsed)
 
 		root.groups = append(root.groups, group)
 	}

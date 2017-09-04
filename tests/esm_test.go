@@ -158,9 +158,9 @@ func TestXxx(t *testing.T) {
 	esm.DumpUnimplementedFields()
 
 	//IndustrialMachine48 := root.GetRecordByEdid("DiamondBulkheadWall12")
-	IndustrialMachine48 := root.GetRecordByFormId(0xA06E6)
+	//IndustrialMachine48 := root.GetRecordByFormId(0xA06E6)
 	//IndustrialMachine48 := root.GetRecordByFormId(0x249c04)
-	//IndustrialMachine48 := root.GetRecordByEdid("IndustrialMachine48")
+	IndustrialMachine48 := root.GetRecordByEdid("IndustrialMachine48")
 
 	if IndustrialMachine48 == nil {
 		esm.DumpEdidIds()
