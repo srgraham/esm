@@ -180,6 +180,10 @@ func (root *Root) GetRecordByFormId(id formid) *Record {
 	return nil
 }
 
+func (root *Root) GetRecordByFormIdUint32(id uint32) *Record {
+	return root.GetRecordByFormId(formid(id))
+}
+
 
 func (root *Root) GetRecordByEdid(edid string) *Record {
 	id := EdidIds[edid]

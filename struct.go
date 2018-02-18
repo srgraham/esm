@@ -1,5 +1,6 @@
 package esm
 
+import "reflect"
 
 const (
 
@@ -84,5 +85,18 @@ func (z zstring) String() string {
 
 
 
-
+func AsUint32(val interface{}) uint32 {
+	ref := reflect.ValueOf(val)
+	if ref.Kind() != reflect.Uint32 {
+		return 0
+	}
+	return uint32(ref.Uint())
+}
+func AsString(val interface{}) string {
+	ref := reflect.ValueOf(val)
+	if ref.Kind() != reflect.String {
+		return ""
+	}
+	return string(ref.String())
+}
 

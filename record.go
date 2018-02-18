@@ -104,6 +104,10 @@ func (r *Record) DebugHeader() {
 	fmt.Printf("_type: %#v\ndataSize: %#v\nflags: %#v\nformid: %#v\nrevision: %#v\nversion: %#v\nunknown: %#v\ndata: %#v\n", r._type, r.dataSize, r.flags, r.formid, r.revision, r.version, r.unknown, r.data)
 }
 
+func (r *Record) FormId() uint32 {
+	return uint32(r.formid)
+}
+
 func (r *Record) isMaster() bool {
 	return r.flags & 0x1 != 0
 }
@@ -191,6 +195,25 @@ func (r *Record) fieldsByType(field_type string) []*Field {
 	return fields
 }
 
+
+func (r *Record) GetOneFieldForType(field_type string) *Field {
+	for _, field := range r.fields {
+		if field.Type() == field_type {
+			return field
+		}
+	}
+	return nil
+}
+
+
+
+func (r *Record) GetFieldDataForType(field_type string) interface{} {
+	field := r.GetOneFieldForType(field_type)
+	if field == nil {
+		return nil
+	}
+	return field.data
+}
 
 
 

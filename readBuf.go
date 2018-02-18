@@ -6,7 +6,7 @@ import (
 	"math"
 	"encoding/binary"
 
-	"regexp"
+	//"regexp"
 )
 
 
@@ -158,8 +158,9 @@ func (b *readBuf) slice(length int64) readBuf {
 }
 
 func (b *readBuf) Human() string {
-	r := regexp.MustCompile("[^a-zA-Z0-9_ ,/?\\\\+=()\\][&^%$#@!~'\":<>-]")
-	out := r.ReplaceAll([]byte(*b), []byte("."))
+	//r := regexp.MustCompile("[^a-zA-Z0-9_ ,/?\\\\+=()\\][&^%$#@!~'\":<>-]")
+	//out := regexHuman.ReplaceAll([]byte(*b), []byte("."))
+	out := regexHuman.ReplaceAll(*b, []byte("."))
 	return string(out)
 }
 

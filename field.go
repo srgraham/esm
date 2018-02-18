@@ -75,7 +75,7 @@ func (f *Field) readHeader(sr io.SectionReader) error {
 		}
 	}
 
-	f.dataBuf = make([]byte, f.dataSize)
+	//f.dataBuf = make([]byte, f.dataSize)
 
 	return nil
 }
@@ -88,9 +88,15 @@ func (f *Field) String() string {
 	return str
 }
 
+func (f *Field) Data() interface{} {
+	return f.data
+}
+
 func (f *Field) readData(reader io.ReaderAt) error {
 
 	sr := io.NewSectionReader(reader, f.off + fieldHeaderLen, f.Size() - fieldHeaderLen)
+
+	f.dataBuf = make([]byte, f.dataSize)
 
 	if n, err := io.ReadFull(sr, f.dataBuf); err != nil {
 		err2 := fmt.Errorf("Unexpected EOF on f.readData() (%s). Read %d bytes, expected %d bytes.", f.Type(), n, len(f.dataBuf))
@@ -141,7 +147,11 @@ func (f *Field) getFieldStructure() (out interface{}, err error) {
 
 	if t == nil {
 		err = ErrUnimplementedField
-		msg := fmt.Sprintf("### Unimplemented field %s.%s: %s", recordTypeStr, fieldTypeStr, f.dataBuf.Human())
+		msg := fmt.Sprintf("### Unimplemented field %s.%s", recordTypeStr, fieldTypeStr)
+
+
+		// dumping human readable dumps literally doubles the cpu time
+		//msg := fmt.Sprintf("### Unimplemented field %s.%s: %s", recordTypeStr, fieldTypeStr, f.dataBuf.Human())
 		LogUnimplementedField(recordTypeStr, fieldTypeStr, f.dataBuf)
 		return msg, err
 	}

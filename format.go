@@ -5,6 +5,7 @@ import (
 	//"reflect"
 	"reflect"
 	"sort"
+	"regexp"
 )
 
 var FieldsStructLookup map[string]map[string]interface{}
@@ -85,6 +86,13 @@ type PosRot struct{
 		Y float32
 		Z float32
 	}
+}
+
+type StructLod4 struct {
+	LOD_1 zstring
+	LOD_2 zstring
+	LOD_3 zstring
+	LOD_4 zstring
 }
 
 
@@ -206,14 +214,12 @@ func DumpEdidIds() {
 	}
 }
 
+var regexHuman *regexp.Regexp
 
 func init() {
 
 
-
-
-
-
+	regexHuman = regexp.MustCompile("[^a-zA-Z0-9_ ,/?\\\\+=()\\][&^%$#@!~'\":<>-]")
 
 	UnimplementedFields = make(map[string]map[string][]readBuf)
 	FieldsStructLookup = make(map[string]map[string]interface{})
@@ -285,6 +291,22 @@ func init() {
 
 	/* ARMO */
 	ARMO := MakeFieldStruct("ARMO")
+	ARMO["EDID"] = zstringZero
+	ARMO["FULL"] = zstringZero
+	ARMO["SCRI"] = formidZero
+	ARMO["EITM"] = formidZero
+	ARMO["ICON"] = zstringZero
+	ARMO["MICO"] = zstringZero
+	ARMO["ICO2"] = zstringZero
+	ARMO["MIC2"] = zstringZero
+	ARMO["BMCT"] = zstringZero
+	ARMO["REPL"] = formidZero
+	ARMO["BIPL"] = formidZero
+	ARMO["ETYP"] = int32Zero
+	ARMO["YNAM"] = formidZero
+	ARMO["ZNAM"] = formidZero
+	ARMO["BNAM"] = uint32Zero
+	ARMO["TNAM"] = formidZero
 	_ = ARMO
 
 	/* ARTO */
@@ -811,6 +833,8 @@ func init() {
 	STAT := MakeFieldStruct("STAT")
 	STAT["DNAM"] = SkipZero
 	//STAT["PRPS"] = dumpAndCrash
+
+
 	STAT["MNAM"] = func(b readBuf, record Record) interface{} {
 
 		lod_1 := b.slice(260)
@@ -818,12 +842,7 @@ func init() {
 		lod_3 := b.slice(260)
 		lod_4 := b.slice(260)
 
-		return struct {
-			LOD_1 zstring
-			LOD_2 zstring
-			LOD_3 zstring
-			LOD_4 zstring
-		}{
+		return StructLod4 {
 			lod_1.zstring(),
 			lod_2.zstring(),
 			lod_3.zstring(),
