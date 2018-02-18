@@ -18,9 +18,10 @@ type LODType struct {
 	LOD_4 string
 }
 
-type PosStruct struct {
+type RefrStruct struct {
 	FormId uint32 `json:"fid"`
-	Model string `json:"model"`
+	StatFormId uint32 `json:"statFid"`
+	//Model string `json:"model"`
 	Scale float32 `json:"scale"`
 	PosX float32 `json:"posX"`
 	PosY float32 `json:"posY"`
@@ -28,12 +29,35 @@ type PosStruct struct {
 	RotX float32 `json:"rotX"`
 	RotY float32 `json:"rotY"`
 	RotZ float32 `json:"rotZ"`
+	//BoundsX1 int16 `json:"boundsX1"`
+	//BoundsY1 int16 `json:"boundsY1"`
+	//BoundsZ1 int16 `json:"boundsZ1"`
+	//BoundsX2 int16 `json:"boundsX2"`
+	//BoundsY2 int16 `json:"boundsY2"`
+	//BoundsZ2 int16 `json:"boundsZ2"`
+}
+
+type StatStruct struct {
+	FormId uint32 `json:"fid"`
+	//StatFormId uint32 `json:"statFid"`
+	Model string `json:"model"`
+	//Scale float32 `json:"scale"`
+	//PosX float32 `json:"posX"`
+	//PosY float32 `json:"posY"`
+	//PosZ float32 `json:"posZ"`
+	//RotX float32 `json:"rotX"`
+	//RotY float32 `json:"rotY"`
+	//RotZ float32 `json:"rotZ"`
 	BoundsX1 int16 `json:"boundsX1"`
 	BoundsY1 int16 `json:"boundsY1"`
 	BoundsZ1 int16 `json:"boundsZ1"`
 	BoundsX2 int16 `json:"boundsX2"`
 	BoundsY2 int16 `json:"boundsY2"`
 	BoundsZ2 int16 `json:"boundsZ2"`
+	Lod1 string `json:"lod1"`
+	Lod2 string `json:"lod2"`
+	Lod3 string `json:"lod3"`
+	Lod4 string `json:"lod4"`
 }
 
 func TestXxx(t *testing.T) {
@@ -211,7 +235,11 @@ func TestXxx(t *testing.T) {
 	records := root.GetRecordsOfType("REFR")
 	fmt.Printf("%d records\n", len(records))
 
-	outRows := make([]*PosStruct, 0)
+	//refrRows := make([]*RefrStruct, 0)
+	//statRows := make([]*StatStruct, 0)
+
+	refrRows := make(map[uint32]RefrStruct)
+	statRows := make(map[uint32]StatStruct)
 
 	for _, refr := range records {
 
@@ -263,10 +291,15 @@ func TestXxx(t *testing.T) {
 		boundsX2 := statOBND.X2
 		boundsY2 := statOBND.Y2
 		boundsZ2 := statOBND.Z2
+		lod1 := esm.AsString(statMNAM.LOD_1)
+		lod2 := esm.AsString(statMNAM.LOD_2)
+		lod3 := esm.AsString(statMNAM.LOD_3)
+		lod4 := esm.AsString(statMNAM.LOD_4)
 
-		out := PosStruct{
+		refrRowJson := RefrStruct{
 			FormId: formId,
-			Model: model,
+			StatFormId: statFormId,
+			//Model: model,
 			Scale: scale,
 			PosX: posX,
 			PosY: posY,
@@ -274,40 +307,78 @@ func TestXxx(t *testing.T) {
 			RotX: rotX,
 			RotY: rotY,
 			RotZ: rotZ,
+			//BoundsX1: boundsX1,
+			//BoundsY1: boundsY1,
+			//BoundsZ1: boundsZ1,
+			//BoundsX2: boundsX2,
+			//BoundsY2: boundsY2,
+			//BoundsZ2: boundsZ2,
+		}
+
+		statRowJson := StatStruct{
+			FormId: statFormId,
+			//StatFormId: statFormId,
+			Model: model,
+			//Scale: scale,
+			//PosX: posX,
+			//PosY: posY,
+			//PosZ: posZ,
+			//RotX: rotX,
+			//RotY: rotY,
+			//RotZ: rotZ,
 			BoundsX1: boundsX1,
 			BoundsY1: boundsY1,
 			BoundsZ1: boundsZ1,
 			BoundsX2: boundsX2,
 			BoundsY2: boundsY2,
 			BoundsZ2: boundsZ2,
+			Lod1: lod1,
+			Lod2: lod2,
+			Lod3: lod3,
+			Lod4: lod4,
 		}
 
 		//fmt.Println(model, scale, posX, posY, posZ, rotX, rotY, rotZ, boundsX1, boundsY1, boundsZ1, boundsX2, boundsY2, boundsZ2)
-		jsonOut, _ := json.Marshal(out)
-		fmt.Println("asdf", string(jsonOut))
+		//jsonOut, _ := json.Marshal(refrRowJson)
+		//jsonOut, _ := json.Marshal(statRowJson)
+		//fmt.Println("asdf", string(jsonOut))
 
-		outRows = append(outRows, &out)
+		//refrRows = append(refrRows, &refrRowJson)
+		//statRows = append(statRows, &statRowJson)
+
+		refrRows[formId] = refrRowJson
+		statRows[statFormId] = statRowJson
 	}
 
-	jsonFullOut, _ := json.Marshal(outRows)
+	refrFullOut, _ := json.Marshal(refrRows)
+	statFullOut, _ := json.Marshal(statRows)
 
-	_ = jsonFullOut
-
-	f, err := os.Create("data.json")
+	fileRefr, err := os.Create("refr.json")
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+	defer fileRefr.Close()
 
-	_, err2 := f.Write(jsonFullOut)
+	_, err2 := fileRefr.Write(refrFullOut)
 	if err2 != nil {
 		panic(err2)
 	}
-	f.Sync()
+	fileRefr.Sync()
 
 
 
 
+	fileStat, err3 := os.Create("stat.json")
+	if err3 != nil {
+		panic(err3)
+	}
+	defer fileStat.Close()
+
+	_, err4 := fileStat.Write(statFullOut)
+	if err4 != nil {
+		panic(err4)
+	}
+	fileStat.Sync()
 
 
 	//fmt.Println(string(jsonFullOut))
