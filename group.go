@@ -8,6 +8,7 @@ import (
 	"compress/zlib"
 	//"io/ioutil"
 	"io/ioutil"
+	"strconv"
 )
 
 type GroupHeader struct {
@@ -29,6 +30,8 @@ type Group struct {
 	off        int64
 	records []*Record
 	subGroups []*Group
+	parentGroup *Group
+	parentRecord *Record
 }
 
 
@@ -39,6 +42,21 @@ func (g *Group) Size() int64 {
 
 func (g *Group) Root() *Root {
 	return g.parentRoot
+}
+func (g *Group) ParentGroup() *Group {
+	return g.parentGroup
+}
+func (g *Group) ParentRecord() *Record {
+	return g.parentRecord
+}
+
+
+func (g *Group) Dump() string {
+	str := g.String() + "\nRecord Count: " + strconv.Itoa(len(g.records)) + "\nSubGroups: " + strconv.Itoa(len(g.subGroups))
+	if g.parentRecord != nil {
+		str += "\nParent Record:\n" + g.parentRecord.Dump()
+	}
+	return str
 }
 
 
@@ -137,6 +155,11 @@ func (g *Group) readRecords(reader io.ReaderAt) error {
 			var nextGroup *Group
 			var err2 error
 			nextGroup, off, err2 = g.Root().readNextGroup(currentReader, off)
+			nextGroup.parentGroup = g
+
+			if len(g.records) > 0 {
+				nextGroup.parentRecord = g.records[len(g.records) - 1]
+			}
 
 			if err2 != nil {
 				return err

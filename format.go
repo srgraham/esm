@@ -88,6 +88,12 @@ type PosRot struct{
 	}
 }
 
+type GridXY struct{
+	X int32
+	Y int32
+	ForceHideLand uint32
+}
+
 type StructLod4 struct {
 	LOD_1 zstring
 	LOD_2 zstring
@@ -343,6 +349,8 @@ func init() {
 
 	/* CELL */
 	CELL := MakeFieldStruct("CELL")
+
+	CELL["XCLC"] = GridXY{}
 	_ = CELL
 
 	/* CLAS */

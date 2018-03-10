@@ -59,6 +59,11 @@ type StatStruct struct {
 	Lod3 string `json:"lod3"`
 	Lod4 string `json:"lod4"`
 }
+type CellStruct struct {
+	FormId uint32 `json:"fid"`
+	GridX int32 `json:"grid_x"`
+	GridY int32 `json:"grid_y"`
+}
 
 func TestXxx(t *testing.T) {
 	fmt.Printf("yoooo")
@@ -192,7 +197,7 @@ func TestXxx(t *testing.T) {
 		//"VTYP",
 		//"WATR",
 		//"WEAP",
-		//"WRLD",
+		"WRLD",
 		//"WTHR",
 		//"ZOOM",
 	}
@@ -232,52 +237,67 @@ func TestXxx(t *testing.T) {
 
 	//fmt.Printf("hello: %s", IndustrialMachine48.Dump())
 
-	records := root.GetRecordsOfType("REFR")
-	fmt.Printf("%d records\n", len(records))
-
-	//refrRows := make([]*RefrStruct, 0)
-	//statRows := make([]*StatStruct, 0)
+	refrs := root.GetRecordsOfType("REFR")
+	stats := root.GetRecordsOfType("STAT")
+	cells := root.GetRecordsOfType("CELL")
 
 	refrRows := make(map[uint32]RefrStruct)
 	statRows := make(map[uint32]StatStruct)
+	cellRows := make(map[uint32]CellStruct)
 
-	for _, refr := range records {
+	for _, refr := range refrs {
 
 		statFormId := esm.AsUint32(refr.GetOneFieldForType("NAME").Data())
+
+		//cellFormId := refr.Root()
 
 		if statFormId == 0 {
 			fmt.Println("Skip failed .Data() %s", statFormId)
 			continue
 		}
 
-		stat := root.GetRecordByFormIdUint32(statFormId)
+		//stat := root.GetRecordByFormIdUint32(statFormId)
+		//
+		//if stat == nil {
+		//	fmt.Printf("nil refr for %d\n", statFormId)
+		//	continue
+		//}
+		//
+		//if stat.Type() != "STAT" {
+		//	fmt.Printf("skipping non-STAT %s\n", stat.Type())
+		//	continue
+		//}
 
-		if stat == nil {
-			fmt.Printf("nil refr for %d\n", statFormId)
-			continue
-		}
-
-		if stat.Type() != "STAT" {
-			fmt.Printf("skipping non-STAT %s\n", stat.Type())
-			continue
-		}
-
-		fmt.Println(refr.Dump())
-		fmt.Println(stat.Dump())
+		//fmt.Println(refr.Dump())
+		//fmt.Println(stat.Dump())
 
 
 
 		refrDATA, _ := refr.GetFieldDataForType("DATA").(esm.PosRot)
-		statOBND, _ := stat.GetFieldDataForType("OBND").(esm.OBND)
+		//statOBND, _ := stat.GetFieldDataForType("OBND").(esm.OBND)
 		refrXSCL, _ := refr.GetFieldDataForType("XSCL").(float32)
-		statMODL := esm.AsString(stat.GetFieldDataForType("MODL"))
-		statMNAM, _ := stat.GetFieldDataForType("MNAM").(esm.StructLod4)
+		//statMODL := esm.AsString(stat.GetFieldDataForType("MODL"))
+		//statMNAM, _ := stat.GetFieldDataForType("MNAM").(esm.StructLod4)
 
 
 
-		fmt.Println(statMNAM)
+		//fmt.Println(statMNAM)
 		formId := refr.FormId()
-		model := statMODL
+
+		if formId == 761249 {
+			fmt.Println(refr.Dump())
+			fmt.Println(refr.ParentGroup().Dump())
+			fmt.Println(refr.ParentGroup().ParentGroup().Dump())
+			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().Dump())
+			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+			//fmt.Println(refr.ParentGroup())
+		}
+
+
+		//model := statMODL
 		scale := refrXSCL
 		posX := refrDATA.Position.X
 		posY := refrDATA.Position.Y
@@ -285,6 +305,35 @@ func TestXxx(t *testing.T) {
 		rotX := refrDATA.Rotation.X
 		rotY := refrDATA.Rotation.Y
 		rotZ := refrDATA.Rotation.Z
+
+		refrRowJson := RefrStruct{
+			FormId: formId,
+			StatFormId: statFormId,
+			Scale: scale,
+			PosX: posX,
+			PosY: posY,
+			PosZ: posZ,
+			RotX: rotX,
+			RotY: rotY,
+			RotZ: rotZ,
+		}
+
+		refrRows[formId] = refrRowJson
+	}
+
+
+
+
+	for _, stat := range stats {
+
+		//refrDATA, _ := refr.GetFieldDataForType("DATA").(esm.PosRot)
+		statOBND, _ := stat.GetFieldDataForType("OBND").(esm.OBND)
+		//refrXSCL, _ := refr.GetFieldDataForType("XSCL").(float32)
+		statMODL := esm.AsString(stat.GetFieldDataForType("MODL"))
+		statMNAM, _ := stat.GetFieldDataForType("MNAM").(esm.StructLod4)
+
+		formId := stat.FormId()
+		model := statMODL
 		boundsX1 := statOBND.X1
 		boundsY1 := statOBND.Y1
 		boundsZ1 := statOBND.Z1
@@ -296,36 +345,9 @@ func TestXxx(t *testing.T) {
 		lod3 := esm.AsString(statMNAM.LOD_3)
 		lod4 := esm.AsString(statMNAM.LOD_4)
 
-		refrRowJson := RefrStruct{
-			FormId: formId,
-			StatFormId: statFormId,
-			//Model: model,
-			Scale: scale,
-			PosX: posX,
-			PosY: posY,
-			PosZ: posZ,
-			RotX: rotX,
-			RotY: rotY,
-			RotZ: rotZ,
-			//BoundsX1: boundsX1,
-			//BoundsY1: boundsY1,
-			//BoundsZ1: boundsZ1,
-			//BoundsX2: boundsX2,
-			//BoundsY2: boundsY2,
-			//BoundsZ2: boundsZ2,
-		}
-
 		statRowJson := StatStruct{
-			FormId: statFormId,
-			//StatFormId: statFormId,
+			FormId: formId,
 			Model: model,
-			//Scale: scale,
-			//PosX: posX,
-			//PosY: posY,
-			//PosZ: posZ,
-			//RotX: rotX,
-			//RotY: rotY,
-			//RotZ: rotZ,
 			BoundsX1: boundsX1,
 			BoundsY1: boundsY1,
 			BoundsZ1: boundsZ1,
@@ -338,21 +360,42 @@ func TestXxx(t *testing.T) {
 			Lod4: lod4,
 		}
 
-		//fmt.Println(model, scale, posX, posY, posZ, rotX, rotY, rotZ, boundsX1, boundsY1, boundsZ1, boundsX2, boundsY2, boundsZ2)
-		//jsonOut, _ := json.Marshal(refrRowJson)
-		//jsonOut, _ := json.Marshal(statRowJson)
-		//fmt.Println("asdf", string(jsonOut))
-
-		//refrRows = append(refrRows, &refrRowJson)
-		//statRows = append(statRows, &statRowJson)
-
-		refrRows[formId] = refrRowJson
-		statRows[statFormId] = statRowJson
+		statRows[formId] = statRowJson
 	}
 
-	refrFullOut, _ := json.Marshal(refrRows)
-	statFullOut, _ := json.Marshal(statRows)
 
+
+	for _, cell := range cells {
+
+		//fmt.Println(cell.Dump())
+
+		//refrDATA, _ := refr.GetFieldDataForType("DATA").(esm.PosRot)
+		//cellCELL, _ := cell.GetFieldDataForType("CELL").(esm.OBND)
+		////refrXSCL, _ := refr.GetFieldDataForType("XSCL").(float32)
+		//cellMODL := esm.AsString(cell.GetFieldDataForType("MODL"))
+		cellXCLC, _ := cell.GetFieldDataForType("XCLC").(esm.GridXY)
+		//isInterior := cell.
+
+		formId := cell.FormId()
+		gridX := cellXCLC.X
+		gridY := cellXCLC.Y
+		//
+		cellRowJson := CellStruct{
+			FormId: formId,
+			//IsInterior: isInterior,
+			GridX: gridX,
+			GridY: gridY,
+		}
+		
+		cellRows[formId] = cellRowJson
+	}
+
+
+
+
+
+	// REFR
+	refrFullOut, _ := json.Marshal(refrRows)
 	fileRefr, err := os.Create("refr.json")
 	if err != nil {
 		panic(err)
@@ -367,7 +410,8 @@ func TestXxx(t *testing.T) {
 
 
 
-
+	// STAT
+	statFullOut, _ := json.Marshal(statRows)
 	fileStat, err3 := os.Create("stat.json")
 	if err3 != nil {
 		panic(err3)
@@ -380,9 +424,25 @@ func TestXxx(t *testing.T) {
 	}
 	fileStat.Sync()
 
+	// CELL
+	cellFullOut, _ := json.Marshal(cellRows)
+	fileStat, err5 := os.Create("cell.json")
+	if err5 != nil {
+		panic(err5)
+	}
+	defer fileStat.Close()
+
+	_, err6 := fileStat.Write(cellFullOut)
+	if err6 != nil {
+		panic(err6)
+	}
+	fileStat.Sync()
+
 
 	//fmt.Println(string(jsonFullOut))
-	fmt.Printf("%d records\n", len(records))
+	fmt.Printf("REFR: %d records\n", len(refrs))
+	fmt.Printf("STAT: %d records\n", len(stats))
+	fmt.Printf("CELL: %d records\n", len(cells))
 
 }
 

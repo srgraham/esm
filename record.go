@@ -132,6 +132,10 @@ func (r *Record) Root() *Root {
 	return r.parentGroup.Root()
 }
 
+func (r *Record) ParentGroup() *Group {
+	return r.parentGroup
+}
+
 
 func (r *Record) readFields(reader io.ReaderAt) error {
 
