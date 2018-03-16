@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	_ "fmt"
@@ -66,45 +67,31 @@ type CellStruct struct {
 type WrldStruct struct {
 	FormId uint32 `json:"fid"`
 }
-type WeapStruct struct {
-	FormId uint32 `json:"fid"`
-	NameLString esm.LString `json:"nameStrId"`
-}
-type IdAndNameStruct struct{
-	FormId uint32 `json:"fid"`
-	NameLString esm.LString `json:"nameStrId"`
+type IdAndNameStruct struct {
+	FormId         uint32      `json:"fid"`
+	NameLString    esm.LString `json:"nameLString"`
+	NameLStringInt int         `json:"nameLSStringInt"`
 }
 
 func main() {
 	fmt.Printf("yoooo")
 	//r, err := esm.OpenReader("./SkjAlert_All_DLC.esp")
 	//r, err := esm.OpenReader("./ShellRain.esp")
-/*
-UNION ${buildSelectForTable('ARMO', '_armo', 'arm')}
-            UNION ${buildSelectForTable('BOOK', '_book', 'b')}
-            UNION ${buildSelectForTable('mgef', '_mgef', 'mg')}
-            UNION ${buildSelectForTable('spel', '_spel', 'sp')}
-            UNION ${buildSelectForTable('ingr', '_ingr', 'ing')}
-            UNION ${buildSelectForTable('cont', '_cont', 'co')}
-            UNION ${buildSelectForTable('ammo', '_ammo', 'am')}
-            UNION ${buildSelectForTable('keym', '_keym', 'ke')}
-            UNION ${buildSelectForTable('alch', '_alch', 'al')}
-            UNION ${buildSelectForTable('misc', '_misc', 'mi')}
-            */
+
 	allowedGroupTypes := []string{
 		//"CELL",
-		"STAT",
+		//"STAT",
 		//"WRLD",
 		"WEAP",
-		"ALCH",
-		"ARMO",
-		"AMMO",
-		"BOOK",
-		"CONT",
-		"INGR",
-		"KEYM",
-		"MISC",
-		"SPEL",
+		//"ALCH",
+		//"ARMO",
+		//"AMMO",
+		//"BOOK",
+		//"CONT",
+		//"INGR",
+		//"KEYM",
+		//"MISC",
+		//"SPEL",
 	}
 
 	r, root, err := esm.OpenReader("/Users/rmgraham/Downloads/Fallout4.esm", allowedGroupTypes)
@@ -116,20 +103,31 @@ UNION ${buildSelectForTable('ARMO', '_armo', 'arm')}
 
 	esm.DumpUnimplementedFields()
 
-	buildJsonFuncs["STAT"](root, "STAT")
+	//buildJsonFuncs["STAT"](root, "STAT")
 	//buildJsonFuncs["CELL"](root, "CELL")
 	buildJsonFuncs["idAndName"](root, "WEAP")
-	buildJsonFuncs["idAndName"](root, "ALCH")
-	buildJsonFuncs["idAndName"](root, "ARMO")
-	buildJsonFuncs["idAndName"](root, "AMMO")
-	buildJsonFuncs["idAndName"](root, "BOOK")
-	buildJsonFuncs["idAndName"](root, "CONT")
-	buildJsonFuncs["idAndName"](root, "INGR")
-	buildJsonFuncs["idAndName"](root, "KEYM")
-	buildJsonFuncs["idAndName"](root, "MISC")
-	buildJsonFuncs["idAndName"](root, "SPEL")
+	//buildJsonFuncs["idAndName"](root, "ALCH")
+	//buildJsonFuncs["idAndName"](root, "ARMO")
+	//buildJsonFuncs["idAndName"](root, "AMMO")
+	//buildJsonFuncs["idAndName"](root, "BOOK")
+	//buildJsonFuncs["idAndName"](root, "CONT")
+	//buildJsonFuncs["idAndName"](root, "INGR")
+	//buildJsonFuncs["idAndName"](root, "KEYM")
+	//buildJsonFuncs["idAndName"](root, "MISC")
+	//buildJsonFuncs["idAndName"](root, "SPEL")
 }
 
+func lstringToInt(lstr *esm.LString) uint32 {
+	if lstr == nil {
+		return 0
+	}
+	bs := []byte(*lstr)
+
+	for charsLeft := 4 - len(bs); charsLeft > 0; charsLeft -= 1 {
+		bs = append(bs, byte(0))
+	}
+	return binary.LittleEndian.Uint32(bs)
+}
 
 func saveJsonStrToFile(filename string, contents []byte) {
 	fileStat, err := os.Create(filename)
@@ -167,7 +165,7 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			cellRows[formId] = cellRowJson
 		}
 		statFullOut, _ := json.Marshal(cellRows)
-		saveJsonStrToFile(name + ".json", statFullOut)
+		saveJsonStrToFile(name+".json", statFullOut)
 
 		fmt.Printf("%s: %d records\n", name, len(cells))
 	},
@@ -179,16 +177,23 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 		for _, item := range items {
 			formId := item.FormId()
 			nameLString, _ := item.GetFieldDataForType("FULL").(esm.LString)
+			nameLStringInt := lstringToInt(&nameLString)
+
+			if formId == 105294 {
+				fmt.Println("%v %v %v %v %v %v", formId, nameLString, nameLStringInt, []byte(nameLString), item, item.Dump())
+				//os.Exit(0)
+			}
 
 			rowJson := IdAndNameStruct{
-				FormId: formId,
-				NameLString: nameLString,
+				FormId:         formId,
+				NameLString:    nameLString,
+				NameLStringInt: int(nameLStringInt),
 			}
 
 			rows[formId] = rowJson
 		}
 		str, _ := json.Marshal(rows)
-		saveJsonStrToFile(name + ".json", str)
+		saveJsonStrToFile(name+".json", str)
 
 		fmt.Printf("%s: %d records\n", name, len(rows))
 	},
@@ -234,7 +239,7 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			statRows[formId] = statRowJson
 		}
 		statFullOut, _ := json.Marshal(statRows)
-		saveJsonStrToFile(name + ".json", statFullOut)
+		saveJsonStrToFile(name+".json", statFullOut)
 
 		fmt.Printf("%s: %d records\n", name, len(stats))
 	},
