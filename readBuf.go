@@ -121,12 +121,12 @@ func(b *readBuf) formid() formid { return formid(b.uint32()) }
 //func(b *readBuf) systemtime() { // return6]uint8 }
 //func(b *readBuf) rgb() { return uint32 }
 //
-func(b *readBuf) lstring(root *Root) lstring {
+func(b *readBuf) lstring(root *Root) LString {
 	if root.IsLocalized() {
 		lookup := b.uint32()
-		return lstring(lookup)
+		return LString(lookup)
 	}
-	return lstring(b.zstring())
+	return LString(b.zstring())
 }
 
 //func(b *readBuf) dlstring() { return string }
@@ -248,7 +248,7 @@ func (b *readBuf) readType(t reflect.Type, v reflect.Value, f *Field) (error) {
 		case zstring:
 			rv = reflect.ValueOf(b.zstring())
 
-		case lstring:
+		case LString:
 
 			rv = reflect.ValueOf(b.lstring(f.Root()))
 		case formid:

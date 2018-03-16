@@ -57,7 +57,7 @@ var filetimeZero filetime
 var systemtimeZero systemtime
 var rgbZero rgb
 
-var lstringZero lstring
+var lstringZero LString
 var dlstringZero dlstring
 var ilstringZero ilstring
 var bstringZero bstring

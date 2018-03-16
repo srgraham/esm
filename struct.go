@@ -64,7 +64,7 @@ type filetime uint64
 type systemtime [16]uint8
 type rgb uint32
 
-type lstring string
+type LString string
 type dlstring string
 type ilstring string
 type bstring string
