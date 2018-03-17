@@ -120,8 +120,7 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 	FieldsStructLookup[label]["KSIZ"] = uint32Zero
 
-	FieldsStructLookup[label]["KWDA"] = func (b readBuf, record Record) []uint32 {
-		fmt.Println("doing on record %d")
+	FieldsStructLookup[label]["KWDA"] = func (b readBuf, record Record) interface{} {
 		fieldsKSIZ := record.fieldsByType("KSIZ")
 		fieldKSIZ := fieldsKSIZ[len(fieldsKSIZ) - 1]
 
@@ -132,10 +131,10 @@ func MakeFieldStruct(label string) map[string]interface{} {
 			panic(fmt.Errorf("Couldnt read count of KSIZ for KWDA"))
 		}
 
-		kwdas := make([]uint32, count)
+		kwdas := make([]formid, count)
 
 		for i := uint32(0); i < count; i += 1 {
-			kwdas[i] = uint32(b.formid())
+			kwdas[i] = b.formid()
 		}
 
 		return kwdas
