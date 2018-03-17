@@ -11,6 +11,8 @@ const (
 	groupHeaderLen = 24
 	fieldHeaderLen = 6
 
+	stringFileMainHeaderLen     = 8
+	stringFileDirectoryEntryLen = 8
 
 	fileHeaderSignature       = 0x54455334 // TES4
 	groupHeaderSignature      = 0x47525550 // GRUP

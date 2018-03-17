@@ -77,7 +77,7 @@ func (r *Record) Type() (string){
 }
 
 func (r *Record) String() string {
-	str := fmt.Sprintf("Record[%s](%d): ", r.Type(), r.dataSize)
+	str := fmt.Sprintf("Record[%s]{%d}(%d): ", r.Type(), r.FormId(), r.dataSize)
 	for _, field := range r.fields {
 		str += fmt.Sprintf("%s", field.Type()) + ", "
 	}
@@ -136,6 +136,13 @@ func (r *Record) Root() *Root {
 
 func (r *Record) ParentGroup() *Group {
 	return r.parentGroup
+}
+
+func (r *Record) NearestParentRecord() *Record {
+	if r.ParentGroup() != nil {
+		return r.ParentGroup().NearestParentRecord()
+	}
+	return nil
 }
 
 

@@ -155,3 +155,38 @@ func (rc *ReadCloser) Close() error {
 
 
 
+// OpenReader will open the esm/esp file specified by name and return a ReadCloser.
+func ReadStrings(filename string) (*ReadCloser, *StringFile, error) {
+	f, err := os.Open(filename)
+	if err != nil {
+		return nil, nil, err
+	}
+	fi, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, nil, err
+	}
+	r := new(ReadCloser)
+
+	reader := f
+	size := fi.Size()
+
+	if size == 0 {
+		size = 1<<63-1
+	}
+
+	off := int64(0)
+
+	sr := io.NewSectionReader(reader, off, size)
+
+	stringFile := &StringFile{off: off, sr: sr}
+
+	err2 := stringFile.read(*sr)
+
+	if err2 != nil {
+		return nil, stringFile, err2
+	}
+
+	r.f = f
+	return r, stringFile, nil
+}

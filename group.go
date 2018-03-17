@@ -50,6 +50,16 @@ func (g *Group) ParentRecord() *Record {
 	return g.parentRecord
 }
 
+func (g *Group) NearestParentRecord() *Record {
+	if g.ParentRecord() != nil {
+		return g.ParentRecord()
+	}
+	if g.parentGroup != nil {
+		return g.parentGroup.NearestParentRecord()
+	}
+	return nil
+}
+
 
 func (g *Group) Dump() string {
 	str := g.String() + "\nRecord Count: " + strconv.Itoa(len(g.records)) + "\nSubGroups: " + strconv.Itoa(len(g.subGroups))

@@ -350,6 +350,8 @@ func init() {
 	CELL := MakeFieldStruct("CELL")
 
 	CELL["XCLC"] = GridXY{}
+	CELL["DATA"] = uint16Zero
+
 	_ = CELL
 
 	/* CLAS */
@@ -572,6 +574,8 @@ func init() {
 
 	/* LCTN */
 	LCTN := MakeFieldStruct("LCTN")
+	LCTN["MNAM"] = formidZero
+
 	_ = LCTN
 
 	/* LENS */
@@ -895,6 +899,7 @@ func init() {
 	WRLD := MakeFieldStruct("WRLD")
 	WRLD["ICON"] = zstringZero
 	WRLD["XWEM"] = zstringZero
+
 	_ = WRLD
 
 	/* WTHR */
