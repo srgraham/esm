@@ -49,7 +49,9 @@ func (sf *StringFile) read(sr io.SectionReader) error {
 
 	sf.readDirectoryEntries()
 
-	sf.dataBuf = make([]byte, sf.dataSize)
+	// some things reference the end of the file
+	// add on 1 so the last byte is a null byte and the captures get null strings
+	sf.dataBuf = make([]byte, sf.dataSize + 1)
 
 	sr.ReadAt(sf.dataBuf, int64(stringFileMainHeaderLen) + int64(sf.DirectoryEntrySize()))
 
@@ -90,9 +92,21 @@ func (sf *StringFile) GetStringForId(id uint32) string {
 	offset := sf.directoryEntries[id]
 
 	i := offset
+
 	for (sf.data)[i] != 0 {
 		i += 1
 	}
 	x := zstring(sf.data[offset:i])
 	return AsString(x)
+}
+
+func (sf *StringFile) GetAllStrings() map[uint32]string {
+
+	out := map[uint32]string{}
+
+	for id, _ := range sf.directoryEntries {
+		out[id] = sf.GetStringForId(id)
+	}
+
+	return out
 }

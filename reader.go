@@ -156,17 +156,18 @@ func (rc *ReadCloser) Close() error {
 
 
 // OpenReader will open the esm/esp file specified by name and return a ReadCloser.
-func ReadStrings(filename string) (*ReadCloser, *StringFile, error) {
+func ReadStrings(filename string) (*StringFile, error) {
 	f, err := os.Open(filename)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	fi, err := f.Stat()
 	if err != nil {
 		f.Close()
-		return nil, nil, err
+		return nil, err
 	}
 	r := new(ReadCloser)
+	defer r.Close()
 
 	reader := f
 	size := fi.Size()
@@ -184,9 +185,9 @@ func ReadStrings(filename string) (*ReadCloser, *StringFile, error) {
 	err2 := stringFile.read(*sr)
 
 	if err2 != nil {
-		return nil, stringFile, err2
+		return stringFile, err2
 	}
 
 	r.f = f
-	return r, stringFile, nil
+	return stringFile, nil
 }
