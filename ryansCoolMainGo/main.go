@@ -21,6 +21,7 @@ type LODType struct {
 type RefrStruct struct {
 	FormId     uint32 `json:"fid"`
 	StatFormId uint32 `json:"statFid"`
+	TNAM       int    `json:"TNAM"` // lctn marker icon id
 	//Model string `json:"model"`
 	Scale float32 `json:"scale"`
 	PosX  float32 `json:"posX"`
@@ -72,6 +73,14 @@ type IdAndNameStruct struct {
 	NameLString    esm.LString `json:"nameLString"`
 	NameLStringInt int         `json:"nameLSStringInt"`
 }
+type KywdStruct struct {
+	FormId uint32 `json:"fid"`
+	EDID   string `json:"EDID"`
+}
+type FormIdKywdAssocStruct struct {
+	FormId uint32 `json:"fid"`
+	KywdId uint32 `json:"kywdFid"`
+}
 
 func main() {
 	fmt.Printf("yoooo")
@@ -79,19 +88,22 @@ func main() {
 	//r, err := esm.OpenReader("./ShellRain.esp")
 
 	allowedGroupTypes := []string{
-		//"CELL",
-		//"STAT",
-		//"WRLD",
+		"REFR",
+		"CELL",
+		"STAT",
+		"WRLD",
 		"WEAP",
-		//"ALCH",
-		//"ARMO",
-		//"AMMO",
-		//"BOOK",
-		//"CONT",
-		//"INGR",
-		//"KEYM",
-		//"MISC",
-		//"SPEL",
+		"KYWD",
+		"LCTN",
+		"ALCH",
+		"ARMO",
+		"AMMO",
+		"BOOK",
+		"CONT",
+		"INGR",
+		"KEYM",
+		"MISC",
+		"SPEL",
 	}
 
 	r, root, err := esm.OpenReader("/Users/rmgraham/Downloads/Fallout4.esm", allowedGroupTypes)
@@ -103,9 +115,24 @@ func main() {
 
 	esm.DumpUnimplementedFields()
 
+	records := root.GetRecords()
+	for _, row := range records {
+		if row.FormId() == 121591 { //lctn
+			fmt.Println("11111 %v", row.Dump())
+		}
+		if row.FormId() == 120551 { //refr
+			fmt.Println("11112 %v", row.Dump())
+		}
+		if row.FormId() == 1542995 { //misc
+			fmt.Println("11113 %v", row.Dump())
+		}
+	}
+
 	//buildJsonFuncs["STAT"](root, "STAT")
+	//buildJsonFuncs["KYWD"](root, "KYWD")
+	//buildJsonFuncs["REFR"](root, "REFR")
 	//buildJsonFuncs["CELL"](root, "CELL")
-	buildJsonFuncs["idAndName"](root, "WEAP")
+	//buildJsonFuncs["idAndName"](root, "WEAP")
 	//buildJsonFuncs["idAndName"](root, "ALCH")
 	//buildJsonFuncs["idAndName"](root, "ARMO")
 	//buildJsonFuncs["idAndName"](root, "AMMO")
@@ -113,8 +140,9 @@ func main() {
 	//buildJsonFuncs["idAndName"](root, "CONT")
 	//buildJsonFuncs["idAndName"](root, "INGR")
 	//buildJsonFuncs["idAndName"](root, "KEYM")
-	//buildJsonFuncs["idAndName"](root, "MISC")
+	buildJsonFuncs["idAndName"](root, "MISC")
 	//buildJsonFuncs["idAndName"](root, "SPEL")
+	//buildJsonFuncs["itemKywdAssoc"](root, "MISC")
 }
 
 func lstringToInt(lstr *esm.LString) uint32 {
@@ -130,6 +158,7 @@ func lstringToInt(lstr *esm.LString) uint32 {
 }
 
 func saveJsonStrToFile(filename string, contents []byte) {
+	filename = "out/" + filename
 	fileStat, err := os.Create(filename)
 	if err != nil {
 		panic(err)
@@ -178,7 +207,7 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			formId := item.FormId()
 			nameLString, _ := item.GetFieldDataForType("FULL").(esm.LString)
 			nameLStringInt := lstringToInt(&nameLString)
-
+			fmt.Println(item.Dump())
 			if formId == 105294 {
 				fmt.Println("%v %v %v %v %v %v", formId, nameLString, nameLStringInt, []byte(nameLString), item, item.Dump())
 				//os.Exit(0)
@@ -188,6 +217,92 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 				FormId:         formId,
 				NameLString:    nameLString,
 				NameLStringInt: int(nameLStringInt),
+			}
+
+			rows[formId] = rowJson
+		}
+		str, _ := json.Marshal(rows)
+		saveJsonStrToFile(name+".json", str)
+
+		fmt.Printf("%s: %d records\n", name, len(rows))
+	},
+	// kywd
+	"KYWD": func(root *esm.Root, name string) {
+		items := root.GetRecordsOfType(name)
+		rows := make(map[uint32]KywdStruct)
+		for _, item := range items {
+			formId := item.FormId()
+			EDID := esm.AsString(item.GetFieldDataForType("EDID"))
+
+			rowJson := KywdStruct{
+				FormId: formId,
+				EDID:   EDID,
+			}
+
+			rows[formId] = rowJson
+		}
+		str, _ := json.Marshal(rows)
+		saveJsonStrToFile(name+".json", str)
+
+		fmt.Printf("%s: %d records\n", name, len(rows))
+	},
+	"itemKywdAssoc": func(root *esm.Root, name string) {
+		items := root.GetRecordsOfType(name)
+		rows := make([]FormIdKywdAssocStruct, 0)
+		for _, item := range items {
+			fmt.Println("%v", item.Dump())
+			formId := item.FormId()
+			kywdIds := esm.AsUint32Arr(item.GetFieldDataForType("KWDA"))
+
+			for _, kywdId := range kywdIds {
+				rowJson := FormIdKywdAssocStruct{
+					FormId: formId,
+					KywdId: kywdId,
+				}
+				rows = append(rows, rowJson)
+			}
+		}
+		str, _ := json.Marshal(rows)
+		saveJsonStrToFile(name+"_kywd_assoc.json", str)
+		fmt.Printf("%s: %d records\n", name+"_kywd_assoc", len(rows))
+	},
+
+	// refr
+	"REFR": func(root *esm.Root, name string) {
+		items := root.GetRecordsOfType(name)
+		rows := make(map[uint32]RefrStruct)
+
+		for _, item := range items {
+			statFormId := esm.AsUint32(item.GetOneFieldForType("NAME").Data())
+			if statFormId == 0 {
+				fmt.Println("Skip failed .Data() %s", statFormId)
+				continue
+			}
+			refrDATA, _ := item.GetFieldDataForType("DATA").(esm.PosRot)
+			refrXSCL, _ := item.GetFieldDataForType("XSCL").(float32)
+			refrTNAM, _ := item.GetFieldDataForType("TNAM").(uint16)
+
+			formId := item.FormId()
+			scale := refrXSCL
+			posX := refrDATA.Position.X
+			posY := refrDATA.Position.Y
+			posZ := refrDATA.Position.Z
+			rotX := refrDATA.Rotation.X
+			rotY := refrDATA.Rotation.Y
+			rotZ := refrDATA.Rotation.Z
+			tnam := int(refrTNAM)
+
+			rowJson := RefrStruct{
+				FormId:     formId,
+				StatFormId: statFormId,
+				TNAM:       tnam,
+				Scale:      scale,
+				PosX:       posX,
+				PosY:       posY,
+				PosZ:       posZ,
+				RotX:       rotX,
+				RotY:       rotY,
+				RotZ:       rotZ,
 			}
 
 			rows[formId] = rowJson

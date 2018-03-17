@@ -3,6 +3,7 @@ package esm
 import (
 	"io"
 	"fmt"
+	"strconv"
 )
 
 // RecordHeader describes a file within a zip file.
@@ -94,6 +95,7 @@ func (r *Record) String() string {
 
 func (r *Record) Dump() string {
 	str := r.String()
+	str += "\nformId: " + strconv.FormatUint(uint64(r.FormId()), 10)
 	for _, field := range r.fields {
 		str += "\n" + field.String()
 	}

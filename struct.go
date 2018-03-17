@@ -92,6 +92,18 @@ func AsUint32(val interface{}) uint32 {
 	}
 	return uint32(ref.Uint())
 }
+func AsUint32Arr(val interface{}) []uint32 {
+	ref := reflect.ValueOf(val)
+	if ref.Kind() != reflect.Array {
+		return make([]uint32, 0)
+	}
+	interfaceArr := val.([]interface{})
+	out := make([]uint32, 0);
+	for _, item := range(interfaceArr) {
+		out = append(out, item.(uint32))
+	}
+	return out
+}
 func AsString(val interface{}) string {
 	ref := reflect.ValueOf(val)
 	if ref.Kind() != reflect.String {
