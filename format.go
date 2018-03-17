@@ -116,7 +116,7 @@ func MakeFieldStruct(label string) map[string]interface{} {
 
 
 
-	FieldsStructLookup[label]["FULL"] = lstringZero
+	FieldsStructLookup[label]["FULL"] = uint32Zero
 
 	FieldsStructLookup[label]["KSIZ"] = uint32Zero
 
@@ -297,7 +297,7 @@ func init() {
 	/* ARMO */
 	ARMO := MakeFieldStruct("ARMO")
 	ARMO["EDID"] = zstringZero
-	ARMO["FULL"] = zstringZero
+	ARMO["FULL"] = uint32Zero
 	ARMO["SCRI"] = formidZero
 	ARMO["EITM"] = formidZero
 	ARMO["ICON"] = zstringZero

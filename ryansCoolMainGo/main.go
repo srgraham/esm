@@ -69,18 +69,24 @@ type WrldStruct struct {
 	FormId uint32 `json:"fid"`
 }
 type IdAndNameStruct struct {
-	FormId         uint32      `json:"fid"`
-	NameLString    esm.LString `json:"nameLString"`
-	NameLStringInt int         `json:"nameLSStringInt"`
+	FormId uint32 `json:"fid"`
+	Name   string `json:"name"`
 }
 type KywdStruct struct {
 	FormId uint32 `json:"fid"`
 	EDID   string `json:"EDID"`
 }
+type LctnStruct struct {
+	FormId uint32 `json:"fid"`
+	Name   string `json:"name"`
+	MarkerRefFid uint32 `json:"markerRefFid"`
+}
 type FormIdKywdAssocStruct struct {
 	FormId uint32 `json:"fid"`
 	KywdId uint32 `json:"kywdFid"`
 }
+
+var stringsHandler *esm.StringFile
 
 func main() {
 	fmt.Printf("yoooo")
@@ -93,8 +99,8 @@ func main() {
 		//"STAT",
 		//"WRLD",
 		"WEAP",
-		"KYWD",
-		//"LCTN",
+		//"KYWD",
+		"LCTN",
 		//"ALCH",
 		//"ARMO",
 		//"AMMO",
@@ -112,6 +118,14 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_, stringsRoot, err2 := esm.ReadStrings("../tests/Fallout4_en.STRINGS")
+
+	if err2 != nil {
+		log.Fatal(err)
+	}
+
+	stringsHandler = stringsRoot
 
 	esm.DumpUnimplementedFields()
 
@@ -132,7 +146,8 @@ func main() {
 	//buildJsonFuncs["KYWD"](root, "KYWD")
 	//buildJsonFuncs["REFR"](root, "REFR")
 	//buildJsonFuncs["CELL"](root, "CELL")
-	//buildJsonFuncs["idAndName"](root, "WEAP")
+	buildJsonFuncs["LCTN"](root, "LCTN")
+	buildJsonFuncs["idAndName"](root, "WEAP")
 	//buildJsonFuncs["idAndName"](root, "ALCH")
 	//buildJsonFuncs["idAndName"](root, "ARMO")
 	//buildJsonFuncs["idAndName"](root, "AMMO")
@@ -205,18 +220,12 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 		rows := make(map[uint32]IdAndNameStruct)
 		for _, item := range items {
 			formId := item.FormId()
-			nameLString, _ := item.GetFieldDataForType("FULL").(esm.LString)
-			nameLStringInt := lstringToInt(&nameLString)
-			fmt.Println(item.Dump())
-			if formId == 105294 {
-				fmt.Println("%v %v %v %v %v %v", formId, nameLString, nameLStringInt, []byte(nameLString), item, item.Dump())
-				//os.Exit(0)
-			}
+			FULL, _ := item.GetFieldDataForType("FULL").(uint32)
+			name := stringsHandler.GetStringForId(FULL)
 
 			rowJson := IdAndNameStruct{
-				FormId:         formId,
-				NameLString:    nameLString,
-				NameLStringInt: int(nameLStringInt),
+				FormId: formId,
+				Name:   name,
 			}
 
 			rows[formId] = rowJson
@@ -237,6 +246,32 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			rowJson := KywdStruct{
 				FormId: formId,
 				EDID:   EDID,
+			}
+
+			rows[formId] = rowJson
+		}
+		str, _ := json.Marshal(rows)
+		saveJsonStrToFile(name+".json", str)
+
+		fmt.Printf("%s: %d records\n", name, len(rows))
+	},
+	// lctn
+	"LCTN": func(root *esm.Root, name string) {
+		items := root.GetRecordsOfType(name)
+		rows := make(map[uint32]LctnStruct)
+		for _, item := range items {
+
+			fmt.Println(item.Dump())
+
+			formId := item.FormId()
+			FULL, _ := item.GetFieldDataForType("FULL").(uint32)
+			name := stringsHandler.GetStringForId(FULL)
+			MNAM := esm.AsUint32(item.GetFieldDataForType("MNAM"))
+
+			rowJson := LctnStruct{
+				FormId: formId,
+				Name: name,
+				MarkerRefFid: MNAM,
 			}
 
 			rows[formId] = rowJson
