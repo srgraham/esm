@@ -88,22 +88,22 @@ func main() {
 	//r, err := esm.OpenReader("./ShellRain.esp")
 
 	allowedGroupTypes := []string{
-		"REFR",
-		"CELL",
-		"STAT",
-		"WRLD",
+		//"REFR",
+		//"CELL",
+		//"STAT",
+		//"WRLD",
 		"WEAP",
 		"KYWD",
-		"LCTN",
-		"ALCH",
-		"ARMO",
-		"AMMO",
-		"BOOK",
-		"CONT",
-		"INGR",
-		"KEYM",
+		//"LCTN",
+		//"ALCH",
+		//"ARMO",
+		//"AMMO",
+		//"BOOK",
+		//"CONT",
+		//"INGR",
+		//"KEYM",
 		"MISC",
-		"SPEL",
+		//"SPEL",
 	}
 
 	r, root, err := esm.OpenReader("/Users/rmgraham/Downloads/Fallout4.esm", allowedGroupTypes)
@@ -140,9 +140,9 @@ func main() {
 	//buildJsonFuncs["idAndName"](root, "CONT")
 	//buildJsonFuncs["idAndName"](root, "INGR")
 	//buildJsonFuncs["idAndName"](root, "KEYM")
-	buildJsonFuncs["idAndName"](root, "MISC")
+	//buildJsonFuncs["idAndName"](root, "MISC")
 	//buildJsonFuncs["idAndName"](root, "SPEL")
-	//buildJsonFuncs["itemKywdAssoc"](root, "MISC")
+	buildJsonFuncs["itemKywdAssoc"](root, "MISC")
 }
 
 func lstringToInt(lstr *esm.LString) uint32 {
@@ -247,10 +247,9 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 		fmt.Printf("%s: %d records\n", name, len(rows))
 	},
 	"itemKywdAssoc": func(root *esm.Root, name string) {
-		items := root.GetRecordsOfType(name)
+		items := root.GetRecords() // all tables
 		rows := make([]FormIdKywdAssocStruct, 0)
 		for _, item := range items {
-			fmt.Println("%v", item.Dump())
 			formId := item.FormId()
 			kywdIds := esm.AsUint32Arr(item.GetFieldDataForType("KWDA"))
 
@@ -263,8 +262,8 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			}
 		}
 		str, _ := json.Marshal(rows)
-		saveJsonStrToFile(name+"_kywd_assoc.json", str)
-		fmt.Printf("%s: %d records\n", name+"_kywd_assoc", len(rows))
+		saveJsonStrToFile("KYWD_assoc.json", str)
+		fmt.Printf("%s: %d records\n", "KYWD_assoc", len(rows))
 	},
 
 	// refr

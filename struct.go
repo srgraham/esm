@@ -1,6 +1,8 @@
 package esm
 
-import "reflect"
+import (
+	"reflect"
+)
 
 const (
 
@@ -94,13 +96,13 @@ func AsUint32(val interface{}) uint32 {
 }
 func AsUint32Arr(val interface{}) []uint32 {
 	ref := reflect.ValueOf(val)
-	if ref.Kind() != reflect.Array {
+	if ref.Kind() != reflect.Slice && ref.Kind() != reflect.Array {
 		return make([]uint32, 0)
 	}
-	interfaceArr := val.([]interface{})
 	out := make([]uint32, 0);
-	for _, item := range(interfaceArr) {
-		out = append(out, item.(uint32))
+	for i:=0; i < ref.Len(); i++ {
+		item := ref.Index(i)
+		out = append(out, uint32(item.Uint()))
 	}
 	return out
 }
