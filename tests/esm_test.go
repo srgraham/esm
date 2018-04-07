@@ -35,6 +35,8 @@ type RefrStruct struct {
 	//BoundsX2 int16 `json:"boundsX2"`
 	//BoundsY2 int16 `json:"boundsY2"`
 	//BoundsZ2 int16 `json:"boundsZ2"`
+
+	CellFid uint32 `json:"cellFid"`
 }
 
 type StatStruct struct {
@@ -61,8 +63,20 @@ type StatStruct struct {
 }
 type CellStruct struct {
 	FormId uint32 `json:"fid"`
+	EditorId string `json:"editor_id"`
+	//NameLid string `json:"nameLid"`
+	IsInterior bool `json:"isInterior"`
 	GridX int32 `json:"grid_x"`
 	GridY int32 `json:"grid_y"`
+	WrldFid uint32 `json:"wrldFid"`
+}
+type WrldStruct struct {
+	FormId uint32 `json:"fid"`
+	//NameLid string `json:"nameLid"`
+}
+type LctnStruct struct {
+	FormId uint32 `json:"fid"`
+	MarkerRefrFid uint32 `json:"marker_refr_fid"`
 }
 
 func TestXxx(t *testing.T) {
@@ -137,7 +151,7 @@ func TestXxx(t *testing.T) {
 		//"LAYR",
 		//"LAYZ",
 		//"LCRT",
-		//"LCTN",
+		"LCTN",
 		//"LENS",
 		//"LGTM",
 		//"LIGH",
@@ -202,6 +216,8 @@ func TestXxx(t *testing.T) {
 		//"ZOOM",
 	}
 
+	//allowedGroupTypes = []string{"LCTN"}
+
 	//allowedGroupTypes = nil
 
 	//specificType := ""
@@ -240,10 +256,14 @@ func TestXxx(t *testing.T) {
 	refrs := root.GetRecordsOfType("REFR")
 	stats := root.GetRecordsOfType("STAT")
 	cells := root.GetRecordsOfType("CELL")
+	wrlds := root.GetRecordsOfType("WRLD")
+	lctns := root.GetRecordsOfType("LCTN")
 
 	refrRows := make(map[uint32]RefrStruct)
 	statRows := make(map[uint32]StatStruct)
 	cellRows := make(map[uint32]CellStruct)
+	wrldRows := make(map[uint32]WrldStruct)
+	lctnRows := make(map[uint32]LctnStruct)
 
 	for _, refr := range refrs {
 
@@ -284,17 +304,23 @@ func TestXxx(t *testing.T) {
 		//fmt.Println(statMNAM)
 		formId := refr.FormId()
 
-		if formId == 761249 {
-			fmt.Println(refr.Dump())
-			fmt.Println(refr.ParentGroup().Dump())
-			fmt.Println(refr.ParentGroup().ParentGroup().Dump())
-			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().Dump())
-			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
-			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
-			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
-			fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
-			//fmt.Println(refr.ParentGroup())
-		}
+		//if formId == 761249 {
+		//
+		//	cellRecord := refr.NearestParentRecord()
+		//	fmt.Println(cellRecord.Dump())
+		//
+		//	//cellFid :=
+		//
+		//	fmt.Println(refr.Dump())
+		//	fmt.Println(refr.ParentGroup().Dump())
+		//	fmt.Println(refr.ParentGroup().ParentGroup().Dump())
+		//	fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().Dump())
+		//	fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+		//	fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+		//	fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+		//	fmt.Println(refr.ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().ParentGroup().Dump())
+		//	//fmt.Println(refr.ParentGroup())
+		//}
 
 
 		//model := statMODL
@@ -305,6 +331,12 @@ func TestXxx(t *testing.T) {
 		rotX := refrDATA.Rotation.X
 		rotY := refrDATA.Rotation.Y
 		rotZ := refrDATA.Rotation.Z
+		var cellFid uint32
+
+		cellRecord := refr.NearestParentRecord()
+		if cellRecord != nil {
+			cellFid = cellRecord.FormId()
+		}
 
 		refrRowJson := RefrStruct{
 			FormId: formId,
@@ -316,6 +348,7 @@ func TestXxx(t *testing.T) {
 			RotX: rotX,
 			RotY: rotY,
 			RotZ: rotZ,
+			CellFid: cellFid,
 		}
 
 		refrRows[formId] = refrRowJson
@@ -374,20 +407,59 @@ func TestXxx(t *testing.T) {
 		////refrXSCL, _ := refr.GetFieldDataForType("XSCL").(float32)
 		//cellMODL := esm.AsString(cell.GetFieldDataForType("MODL"))
 		cellXCLC, _ := cell.GetFieldDataForType("XCLC").(esm.GridXY)
-		//isInterior := cell.
+		//cellFULL := esm.AsString(cell.GetFieldDataForType("FULL"))
+		cellDATA, _ := cell.GetFieldDataForType("DATA").(uint16)
+		cellEDID := esm.AsString(cell.GetFieldDataForType("EDID"))
+
+		var wrldFid uint32
+
+		wrldRecord := cell.NearestParentRecord()
+		if wrldRecord != nil {
+			wrldFid = wrldRecord.FormId()
+		}
 
 		formId := cell.FormId()
+		editorId := cellEDID
 		gridX := cellXCLC.X
 		gridY := cellXCLC.Y
+		//nameLid := cellFULL
+		isInterior := (cellDATA & 0x1) != 0
 		//
 		cellRowJson := CellStruct{
 			FormId: formId,
-			//IsInterior: isInterior,
+			EditorId: editorId,
+			//NameLid: nameLid,
+			IsInterior: isInterior,
 			GridX: gridX,
 			GridY: gridY,
+			WrldFid: wrldFid,
 		}
 		
 		cellRows[formId] = cellRowJson
+	}
+	for _, wrld := range wrlds {
+
+		formId := wrld.FormId()
+		//nameLid := esm.AsString(wrld.GetFieldDataForType("FULL"))
+
+		wrldRowJson := WrldStruct{
+			FormId: formId,
+			//NameLid: nameLid,
+		}
+
+		wrldRows[formId] = wrldRowJson
+	}
+
+	for _, lctn := range lctns {
+		formId := lctn.FormId()
+		markerRefrFid := esm.AsUint32(lctn.GetFieldDataForType("MNAM"))
+
+		lctnRowJson := LctnStruct{
+			FormId: formId,
+			MarkerRefrFid: markerRefrFid,
+		}
+
+		lctnRows[formId] = lctnRowJson
 	}
 
 
@@ -396,15 +468,15 @@ func TestXxx(t *testing.T) {
 
 	// REFR
 	refrFullOut, _ := json.Marshal(refrRows)
-	fileRefr, err := os.Create("refr.json")
-	if err != nil {
-		panic(err)
+	fileRefr, err1 := os.Create("refr.json")
+	if err1 != nil {
+		panic(err1)
 	}
 	defer fileRefr.Close()
 
-	_, err2 := fileRefr.Write(refrFullOut)
-	if err2 != nil {
-		panic(err2)
+	_, err = fileRefr.Write(refrFullOut)
+	if err != nil {
+		panic(err)
 	}
 	fileRefr.Sync()
 
@@ -412,37 +484,67 @@ func TestXxx(t *testing.T) {
 
 	// STAT
 	statFullOut, _ := json.Marshal(statRows)
-	fileStat, err3 := os.Create("stat.json")
-	if err3 != nil {
-		panic(err3)
+	fileStat, err2 := os.Create("stat.json")
+	if err2 != nil {
+		panic(err2)
 	}
 	defer fileStat.Close()
 
-	_, err4 := fileStat.Write(statFullOut)
-	if err4 != nil {
-		panic(err4)
+	_, err = fileStat.Write(statFullOut)
+	if err != nil {
+		panic(err)
 	}
 	fileStat.Sync()
 
 	// CELL
 	cellFullOut, _ := json.Marshal(cellRows)
-	fileStat, err5 := os.Create("cell.json")
+	fileCell, err3 := os.Create("cell.json")
+	if err3 != nil {
+		panic(err3)
+	}
+	defer fileCell.Close()
+
+	_, err = fileCell.Write(cellFullOut)
+	if err != nil {
+		panic(err)
+	}
+	fileCell.Sync()
+
+	// WRLD
+	wrldFullOut, _ := json.Marshal(wrldRows)
+	fileWrld, err4 := os.Create("wrld.json")
+	if err4 != nil {
+		panic(err4)
+	}
+	defer fileWrld.Close()
+
+	_, err = fileWrld.Write(wrldFullOut)
+	if err != nil {
+		panic(err)
+	}
+	fileWrld.Sync()
+
+	// LCTN
+	lctnFullOut, _ := json.Marshal(lctnRows)
+	fileLctn, err5 := os.Create("lctn.json")
 	if err5 != nil {
 		panic(err5)
 	}
-	defer fileStat.Close()
+	defer fileLctn.Close()
 
-	_, err6 := fileStat.Write(cellFullOut)
-	if err6 != nil {
-		panic(err6)
+	_, err = fileLctn.Write(lctnFullOut)
+	if err != nil {
+		panic(err)
 	}
-	fileStat.Sync()
+	fileLctn.Sync()
 
 
 	//fmt.Println(string(jsonFullOut))
 	fmt.Printf("REFR: %d records\n", len(refrs))
 	fmt.Printf("STAT: %d records\n", len(stats))
 	fmt.Printf("CELL: %d records\n", len(cells))
+	fmt.Printf("WRLD: %d records\n", len(wrlds))
+	fmt.Printf("LCTN: %d records\n", len(lctns))
 
 }
 
