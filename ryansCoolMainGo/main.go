@@ -331,12 +331,17 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			rotY := refrDATA.Rotation.Y
 			rotZ := refrDATA.Rotation.Z
 			tnam := int(refrTNAM)
-			cellFormId := esm.AsUint32(item.Root())
+			var cellFid uint32
+
+			cellRecord := item.NearestParentRecord()
+			if cellRecord != nil {
+				cellFid = cellRecord.FormId()
+			}
 
 			rowJson := RefrStruct{
 				FormId:     formId,
 				StatFormId: statFormId,
-				CellFormId: cellFormId,
+				CellFormId: cellFid,
 				TNAM:       tnam,
 				Scale:      scale,
 				PosX:       posX,
