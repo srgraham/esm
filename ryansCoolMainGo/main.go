@@ -21,6 +21,7 @@ type LODType struct {
 type RefrStruct struct {
 	FormId     uint32 `json:"fid"`
 	StatFormId uint32 `json:"statFid"`
+	CellFormId uint32 `json:"cellFid"`
 	TNAM       int    `json:"TNAM"` // lctn marker icon id
 	//Model string `json:"model"`
 	Scale float32 `json:"scale"`
@@ -94,22 +95,23 @@ func main() {
 	//r, err := esm.OpenReader("./ShellRain.esp")
 
 	allowedGroupTypes := []string{
-		//"REFR",
-		//"CELL",
-		//"STAT",
-		//"WRLD",
-		"WEAP",
-		//"KYWD",
+		"REFR",
+		"CELL",
+		"STAT",
+		"WRLD",
+		"KYWD",
 		"LCTN",
-		//"ALCH",
-		//"ARMO",
-		//"AMMO",
-		//"BOOK",
-		//"CONT",
-		//"INGR",
-		//"KEYM",
+		"WEAP",
+		"ALCH",
+		"ARMO",
+		"AMMO",
+		"BOOK",
+		"CONT",
+		"INGR",
+		"KEYM",
 		"MISC",
-		//"SPEL",
+		"MGEF",
+		"SPEL",
 	}
 
 	r, root, err := esm.OpenReader("/Users/rmgraham/Downloads/Fallout4.esm", allowedGroupTypes)
@@ -119,7 +121,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_, stringsRoot, err2 := esm.ReadStrings("../tests/Fallout4_en.STRINGS")
+	stringsRoot, err2 := esm.ReadStrings("../tests/Fallout4_en.STRINGS")
 
 	if err2 != nil {
 		log.Fatal(err)
@@ -142,21 +144,22 @@ func main() {
 		}
 	}
 
-	//buildJsonFuncs["STAT"](root, "STAT")
-	//buildJsonFuncs["KYWD"](root, "KYWD")
-	//buildJsonFuncs["REFR"](root, "REFR")
-	//buildJsonFuncs["CELL"](root, "CELL")
+	buildJsonFuncs["STAT"](root, "STAT")
+	buildJsonFuncs["KYWD"](root, "KYWD")
+	buildJsonFuncs["REFR"](root, "REFR")
+	buildJsonFuncs["CELL"](root, "CELL")
 	buildJsonFuncs["LCTN"](root, "LCTN")
 	buildJsonFuncs["idAndName"](root, "WEAP")
-	//buildJsonFuncs["idAndName"](root, "ALCH")
-	//buildJsonFuncs["idAndName"](root, "ARMO")
-	//buildJsonFuncs["idAndName"](root, "AMMO")
-	//buildJsonFuncs["idAndName"](root, "BOOK")
-	//buildJsonFuncs["idAndName"](root, "CONT")
-	//buildJsonFuncs["idAndName"](root, "INGR")
-	//buildJsonFuncs["idAndName"](root, "KEYM")
-	//buildJsonFuncs["idAndName"](root, "MISC")
-	//buildJsonFuncs["idAndName"](root, "SPEL")
+	buildJsonFuncs["idAndName"](root, "ALCH")
+	buildJsonFuncs["idAndName"](root, "ARMO")
+	buildJsonFuncs["idAndName"](root, "AMMO")
+	buildJsonFuncs["idAndName"](root, "BOOK")
+	buildJsonFuncs["idAndName"](root, "CONT")
+	buildJsonFuncs["idAndName"](root, "INGR")
+	buildJsonFuncs["idAndName"](root, "KEYM")
+	buildJsonFuncs["idAndName"](root, "MISC")
+	buildJsonFuncs["idAndName"](root, "MGEF")
+	buildJsonFuncs["idAndName"](root, "SPEL")
 	buildJsonFuncs["itemKywdAssoc"](root, "MISC")
 }
 
@@ -220,6 +223,9 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 		rows := make(map[uint32]IdAndNameStruct)
 		for _, item := range items {
 			formId := item.FormId()
+			if formId == 141202{
+				fmt.Println(item.Dump())
+			}
 			FULL, _ := item.GetFieldDataForType("FULL").(uint32)
 			name := stringsHandler.GetStringForId(FULL)
 
@@ -325,10 +331,12 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 			rotY := refrDATA.Rotation.Y
 			rotZ := refrDATA.Rotation.Z
 			tnam := int(refrTNAM)
+			cellFormId := esm.AsUint32(item.Root())
 
 			rowJson := RefrStruct{
 				FormId:     formId,
 				StatFormId: statFormId,
+				CellFormId: cellFormId,
 				TNAM:       tnam,
 				Scale:      scale,
 				PosX:       posX,
