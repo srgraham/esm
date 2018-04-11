@@ -101,6 +101,12 @@ type StructLod4 struct {
 	LOD_4 zstring
 }
 
+type XtelStruct struct {
+	DoorFid formid
+	PosRot
+	Flags uint32
+}
+
 
 func MakeFieldStruct(label string) map[string]interface{} {
 	FieldsStructLookup[label] = make(map[string]interface{})
@@ -743,11 +749,7 @@ func init() {
 
 	REFR["XLIG"] = SkipZero
 	REFR["XLYR"] = formidZero // GECK layer info (house floor grouping) :D
-	REFR["XTEL"] = struct {
-		Door formid
-		PosRot
-		Flags uint32
-	}{}
+	REFR["XTEL"] = XtelStruct{}
 
 	REFR["XNDP"] = struct {
 		NavMesh formid

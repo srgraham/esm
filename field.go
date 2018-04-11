@@ -89,6 +89,12 @@ func (f *Field) String() string {
 }
 
 func (f *Field) Data() interface{} {
+	if f == nil {
+		return nil
+	}
+	if f.data == nil {
+		return nil
+	}
 	return f.data
 }
 

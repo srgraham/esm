@@ -1,15 +1,18 @@
 package main
 
 import (
-	"encoding/binary"
-	"encoding/json"
-	"fmt"
 	_ "fmt"
-	"github.com/srgraham/esm"
 	_ "io/ioutil"
+	"fmt"
 	"log"
+	"encoding/binary"
 	"os"
+	"encoding/json"
+	"path/filepath"
+	esm ".."
 )
+
+
 
 type LODType struct {
 	LOD_1 string
@@ -87,9 +90,34 @@ type FormIdKywdAssocStruct struct {
 	KywdId uint32 `json:"kywdFid"`
 }
 
+type XtelStruct struct {
+	FormId uint32 `json:"fid"`
+	CellFid uint32 `json:"cellFid"`
+	DoorFid uint32 `json:"doorFid"`
+	PosX float32 `json:"posX"`
+	PosY float32 `json:"posY"`
+	PosZ float32 `json:"posZ"`
+	RotX float32 `json:"rotX"`
+	RotY float32 `json:"rotY"`
+	RotZ float32 `json:"rotZ"`
+}
+
 var stringsHandler *esm.StringFile
 
 func main() {
+
+
+	pathStrings, _ := filepath.Abs("./tests/Fallout4_en.STRINGS")
+	pathDir, _ := filepath.Abs("./ryansCoolMainGo")
+
+	var paths = map[string]string{
+		"Fallout4_en.STRINGS": pathStrings,
+		"Fallout4.esm": "C:/Program Files (x86)/Steam/steamapps/common/Fallout 4/Data/Fallout4.esm",
+		//"Fallout4.esm": "/Users/rmgraham/Downloads/Fallout4.esm",
+		"DIR": pathDir,
+	}
+
+
 	fmt.Printf("yoooo")
 	//r, err := esm.OpenReader("./SkjAlert_All_DLC.esp")
 	//r, err := esm.OpenReader("./ShellRain.esp")
@@ -114,18 +142,22 @@ func main() {
 		"SPEL",
 	}
 
-	r, root, err := esm.OpenReader("/Users/rmgraham/Downloads/Fallout4.esm", allowedGroupTypes)
+	r, root, err := esm.OpenReader(paths["Fallout4.esm"], allowedGroupTypes)
 	defer r.Close()
 
 	if err != nil {
+		fmt.Println("Died on reading esm")
 		log.Fatal(err)
 	}
 
-	stringsRoot, err2 := esm.ReadStrings("../tests/Fallout4_en.STRINGS")
+	stringsRoot, err2 := esm.ReadStrings(paths["Fallout4_en.STRINGS"])
 
 	if err2 != nil {
-		log.Fatal(err)
+		fmt.Println("Died on reading strings")
+		log.Fatal(err2)
 	}
+
+
 
 	stringsHandler = stringsRoot
 
@@ -149,6 +181,7 @@ func main() {
 	buildJsonFuncs["REFR"](root, "REFR")
 	buildJsonFuncs["CELL"](root, "CELL")
 	buildJsonFuncs["LCTN"](root, "LCTN")
+	buildJsonFuncs["XTEL"](root, "XTEL")
 	buildJsonFuncs["idAndName"](root, "WEAP")
 	buildJsonFuncs["idAndName"](root, "ALCH")
 	buildJsonFuncs["idAndName"](root, "ARMO")
@@ -176,7 +209,7 @@ func lstringToInt(lstr *esm.LString) uint32 {
 }
 
 func saveJsonStrToFile(filename string, contents []byte) {
-	filename = "out/" + filename
+	filename, _ = filepath.Abs("./ryansCoolMainGo/out/" + filename)
 	fileStat, err := os.Create(filename)
 	if err != nil {
 		panic(err)
@@ -404,5 +437,53 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 		saveJsonStrToFile(name+".json", statFullOut)
 
 		fmt.Printf("%s: %d records\n", name, len(stats))
+	},
+
+	// xtel
+	"XTEL": func(root *esm.Root, name string) {
+		items := root.GetRecordsOfType("REFR")
+		rows := make(map[uint32]XtelStruct)
+
+		for _, item := range items {
+			xtel_data := item.GetOneFieldForType("XTEL").Data()
+			if xtel_data == nil {
+				continue
+			}
+			xtelDATA, _ := item.GetFieldDataForType("XTEL").(esm.XtelStruct)
+
+			formId := item.FormId()
+			posX := xtelDATA.Position.X
+			posY := xtelDATA.Position.Y
+			posZ := xtelDATA.Position.Z
+			rotX := xtelDATA.Rotation.X
+			rotY := xtelDATA.Rotation.Y
+			rotZ := xtelDATA.Rotation.Z
+			doorFid := uint32(xtelDATA.DoorFid)
+
+			var cellFid uint32
+
+			cellRecord := item.NearestParentRecord()
+			if cellRecord != nil {
+				cellFid = cellRecord.FormId()
+			}
+
+			rowJson := XtelStruct{
+				FormId:     formId,
+				CellFid: cellFid,
+				DoorFid: doorFid,
+				PosX:       posX,
+				PosY:       posY,
+				PosZ:       posZ,
+				RotX:       rotX,
+				RotY:       rotY,
+				RotZ:       rotZ,
+			}
+
+			rows[formId] = rowJson
+		}
+		str, _ := json.Marshal(rows)
+		saveJsonStrToFile(name+".json", str)
+
+		fmt.Printf("%s: %d records\n", name, len(rows))
 	},
 }
