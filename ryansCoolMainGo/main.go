@@ -66,8 +66,12 @@ type StatStruct struct {
 }
 type CellStruct struct {
 	FormId uint32 `json:"fid"`
+	Name string `json:"name"`
+	EditorId string `json:"editorId"`
+	IsInterior bool `json:"isInterior"`
 	GridX  int32  `json:"grid_x"`
 	GridY  int32  `json:"grid_y"`
+	WrldFid uint32 `json:wrldFid`
 }
 type WrldStruct struct {
 	FormId uint32 `json:"fid"`
@@ -230,16 +234,32 @@ var buildJsonFuncs = map[string]func(root *esm.Root, name string){
 		cellRows := make(map[uint32]CellStruct)
 		for _, cell := range cells {
 			cellXCLC, _ := cell.GetFieldDataForType("XCLC").(esm.GridXY)
+			cellDATA, _ := cell.GetFieldDataForType("DATA").(uint16)
+			cellEDID := esm.AsString(cell.GetFieldDataForType("EDID"))
+			//cellFULL := esm.AsString(cell.GetFieldDataForType("FULL"))
+
+			var wrldFid uint32
+
+			wrldRecord := cell.NearestParentRecord()
+			if wrldRecord != nil {
+				wrldFid = wrldRecord.FormId()
+			}
 
 			formId := cell.FormId()
 			gridX := cellXCLC.X
 			gridY := cellXCLC.Y
+			isInterior := (cellDATA & 0x1) != 0
+			//name := cellFULL
+			editorId := cellEDID
 
 			cellRowJson := CellStruct{
 				FormId: formId,
-				//IsInterior: isInterior,
+				//Name: name,
+				EditorId: editorId,
+				IsInterior: isInterior,
 				GridX: gridX,
 				GridY: gridY,
+				WrldFid: wrldFid,
 			}
 
 			cellRows[formId] = cellRowJson
